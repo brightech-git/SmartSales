@@ -15,7 +15,7 @@ const OTHER_CHARGES_KEY = ["otherCharges"];
 /** Fetch all other charges */
 export const useOtherCharges = (filter?:string) => {
     return useQuery({
-        queryKey: [...OTHER_CHARGES_KEY , filter],
+        queryKey: [...OTHER_CHARGES_KEY, "all", filter],
         queryFn:() => getAllOtherCharges(filter),
     });
 };
@@ -24,7 +24,9 @@ export const useOtherCharges = (filter?:string) => {
 /** Fetch all Active other charges */
 export const useActiveOtherCharges = (filter?: string) => {
     return useQuery({
-        queryKey: [...OTHER_CHARGES_KEY, filter],
+        // Separate key from the full list: entry screens must never be served
+        // inactive charges from the master screen's cache, or vice versa.
+        queryKey: [...OTHER_CHARGES_KEY, "active", filter],
         queryFn: () => getActiveOtherCharges(filter),
     });
 };
@@ -32,7 +34,7 @@ export const useActiveOtherCharges = (filter?: string) => {
 /** Fetch a single other charge by ID */
 export const useOtherChargeById = (id: number) => {
     return useQuery({
-        queryKey: [...OTHER_CHARGES_KEY, id],
+        queryKey: [...OTHER_CHARGES_KEY, "one", id],
         queryFn: () => getOtherChargeById(id),
         enabled: !!id,
     });

@@ -2,6 +2,7 @@ import {
     useQuery,
     useMutation,
     useQueryClient,
+    type QueryClient,
 } from "@tanstack/react-query";
 
 import { TransactionService, getBillWiseSales } from "@/service/TransactionService";
@@ -11,14 +12,49 @@ import { billNoParams } from "@/service/TransactionService";
 import { PurchaseTransactionList } from "@/types/transactionList/TransactionList";
 
 /* -------------------- QUERY KEYS -------------------- */
+// Every key starts with ["transactions", TRANTYPE] so purchase and sales never
+// share cache entries and invalidating one type leaves the other alone.
+export type TransactionListFilters = {
+    trantype?: string | null;
+    accode?: number | null;
+    startdate?: string | null;
+    enddate?: string | null;
+    itemid?: number | null;
+};
+
 export const transactionKeys = {
     all: ["transactions"] as const,
-    list: (TRANTYPE: string) => [...transactionKeys.all, TRANTYPE] as const,
+    type: (TRANTYPE: string) => [...transactionKeys.all, TRANTYPE] as const,
+    list: (TRANTYPE: string, filters?: TransactionListFilters) =>
+        filters
+            ? ([...transactionKeys.type(TRANTYPE), "list", {
+                  trantype: filters.trantype ?? null,
+                  accode: filters.accode ?? null,
+                  startdate: filters.startdate ?? null,
+                  enddate: filters.enddate ?? null,
+                  itemid: filters.itemid ?? null,
+              }] as const)
+            : ([...transactionKeys.type(TRANTYPE), "list"] as const),
     byId: (sno: number, TRANTYPE: string) =>
-        [...transactionKeys.all, "one", sno, TRANTYPE] as const,
-    byTransId: (transId: string | null) =>
-        [...transactionKeys.all, "transId", transId] as const,
+        [...transactionKeys.type(TRANTYPE), "one", sno] as const,
+    byTransId: (transId: string | null, TRANTYPE: string) =>
+        [...transactionKeys.type(TRANTYPE), "transId", transId] as const,
 };
+
+/**
+ * Data a saved purchase or sale changes: its own lists and next entry
+ * numbers, the customer's opening balance, stock lists, bill details and the
+ * untagged lots shown on Barcode Generate.
+ */
+export const invalidateAfterTransactionSave = (queryClient: QueryClient, TRANTYPE: string) =>
+    Promise.all([
+        queryClient.invalidateQueries({ queryKey: transactionKeys.type(TRANTYPE) }),
+        queryClient.invalidateQueries({ queryKey: ["openingBalance"] }),
+        queryClient.invalidateQueries({ queryKey: ["ornaments"] }),
+        queryClient.invalidateQueries({ queryKey: ["pureGoldData"] }),
+        queryClient.invalidateQueries({ queryKey: ["bill-details"] }),
+        queryClient.invalidateQueries({ queryKey: ["barcode-items"] }),
+    ]);
 
 
 /* -------------------- QUERIES -------------------- */
@@ -32,17 +68,8 @@ export const useTransactions = (props: {
     enddate?: string | null;
     itemid?: number | null;
 }) => {
-    console.log("useTransaction called with props:", props);
     return useQuery<ApiResponse<PurchaseTransactionList>, Error, PurchaseTransactionList>({
-        queryKey: [
-            "transactions",
-            "list",
-            props.trantype ?? "all",
-            props.accode ?? "all",
-            props.startdate ?? "all",
-            props.enddate ?? "all",
-            props.itemid ?? "all",
-        ],
+        queryKey: transactionKeys.list(props.TRANTYPE, props),
         queryFn: () => TransactionService.getAll(props),
         select: (res) => res.data
     });
@@ -54,7 +81,7 @@ export const useTransactionByTransId = (
     TRANTYPE: string
 ) => {
     return useQuery<ApiResponse<any>>({
-        queryKey: transactionKeys.byTransId(transId),
+        queryKey: transactionKeys.byTransId(transId, TRANTYPE),
         queryFn: () =>
             TransactionService.getByTransId(transId, TRANTYPE),
         enabled: !!transId,
@@ -92,11 +119,7 @@ export const useUpdateTransaction = () => {
             TRANTYPE: string;
         }) => TransactionService.update(entryNo, payload, TRANTYPE),
 
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: transactionKeys.all,
-            });
-        },
+        onSuccess: (_data, { TRANTYPE }) => invalidateAfterTransactionSave(queryClient, TRANTYPE),
     });
 };
 
@@ -115,7 +138,7 @@ export const usePatchTransaction = (TRANTYPE: string, tranType: string) => {
 
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: transactionKeys.list(TRANTYPE),
+                queryKey: transactionKeys.type(TRANTYPE),
             });
         },
     });
@@ -131,7 +154,7 @@ export const useDeleteTransaction = (TRANTYPE: string, tranType: string) => {
 
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: transactionKeys.list(TRANTYPE),
+                queryKey: transactionKeys.type(TRANTYPE),
             });
         },
     });
@@ -146,11 +169,7 @@ export const useCreateTransactions = () => {
         mutationFn: ({ payload, TRANTYPE }: { payload: CreateTransaction; TRANTYPE: string }) =>
             TransactionService.createMany(payload, TRANTYPE),
 
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: transactionKeys.all,
-            });
-        },
+        onSuccess: (_data, { TRANTYPE }) => invalidateAfterTransactionSave(queryClient, TRANTYPE),
     });
 };
 
@@ -159,8 +178,6 @@ export const useBillDetails = (params: billNoParams) => {
     return useQuery({
         queryKey: ['bill-details', params],
         queryFn: () => getBillWiseSales(params),
-        enabled: true,
-        staleTime: 1000 * 60 * 5, // optional: cache for 5 mins
         retry: 1,
     })
 }

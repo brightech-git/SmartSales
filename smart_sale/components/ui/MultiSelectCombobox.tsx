@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, forwardRef } from "react";
+import React, { useEffect, useMemo, useRef, useState, forwardRef } from "react";
 import {
     Field,
     Combobox,
@@ -74,10 +74,21 @@ export const MultiSelectCombobox = forwardRef<
             filter: contains,
         });
 
+        // Callers often pass a new array every render (`data?.map(...) ?? []`).
+        // Reset the collection only when the options actually change; resetting
+        // on every new array reference caused a "Maximum update depth" loop.
+        const itemsKey = useMemo(
+            () => (items ?? []).map((item) => `${item.value}\u0000${item.label}`).join("\u0001"),
+            [items]
+        );
+        const syncedItemsKey = useRef<string | null>(null);
+
         useEffect(() => {
-            setCollection(items || []);
+            if (syncedItemsKey.current === itemsKey) return;
+            syncedItemsKey.current = itemsKey;
+            setCollection(items ?? []);
             applyFilter("");
-        }, [items, setCollection, applyFilter]);
+        }, [items, itemsKey, setCollection, applyFilter]);
 
         useEffect(() => {
             applyFilter("");

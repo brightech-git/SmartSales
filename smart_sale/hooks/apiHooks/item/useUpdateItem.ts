@@ -11,6 +11,7 @@ export const useUpdateItem = () => {
 
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["items"] });
+            qc.invalidateQueries({ queryKey: ["stoneItems"] }); // item lists on entry screens
             toastUpdated("Item");
         },
         onError: () => {

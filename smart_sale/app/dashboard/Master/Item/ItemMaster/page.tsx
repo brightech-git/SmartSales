@@ -278,7 +278,7 @@ export default function ItemMasterPage() {
         if (!editingId) {
             setForm((prev) => ({
                 ...prev,
-                itemId: Number(itemsData?.nextId) ?? '0',
+                itemId: Number(itemsData?.nextId ?? 0),
                 metalId: metals[0]?.value ?? "G",
                 hsn: "",
                 shortName: "",
@@ -290,7 +290,7 @@ export default function ItemMasterPage() {
                 stnPresent: "Y",
                 companyId: companies[0]?.value ?? "",
             }));
-            setAutoItemId(Number(itemsData?.nextId) ?? '0');
+            setAutoItemId(Number(itemsData?.nextId ?? 0));
         }
         return () => {
             controller.abort();

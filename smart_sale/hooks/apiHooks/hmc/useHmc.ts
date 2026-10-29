@@ -1,4 +1,4 @@
-import { useMutation, useQuery, QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { HmcService } from "@/service/HmcService";
 import { ApiResponse } from "@/types/api/apiResponse";
@@ -14,11 +14,11 @@ import {
     HmcForm,
 } from "@/types/hmc/hmc";
 
-const queryClient = new QueryClient();
 
 /* ---------------- CREATE ---------------- */
 
 export const useHmcCreate = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: HmcService().createHmc,
 
@@ -26,6 +26,9 @@ export const useHmcCreate = () => {
             queryClient.invalidateQueries({
                 queryKey: ["hmc"],
             });
+            // Entry screens read rates through these keys.
+            queryClient.invalidateQueries({ queryKey: ["hmc-by-id"] });
+            queryClient.invalidateQueries({ queryKey: ["hmc-filter"] });
 
             toastCreated("HMC Mapping");
         },
@@ -70,6 +73,7 @@ export const useHmcDataById = (
 /* ---------------- UPDATE ---------------- */
 
 export const useModifyHmcById = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: {
             id: number;
@@ -84,6 +88,9 @@ export const useModifyHmcById = () => {
             queryClient.invalidateQueries({
                 queryKey: ["hmc"],
             });
+            // Entry screens read rates through these keys.
+            queryClient.invalidateQueries({ queryKey: ["hmc-by-id"] });
+            queryClient.invalidateQueries({ queryKey: ["hmc-filter"] });
 
             toastUpdated("HMC Mapping");
         },

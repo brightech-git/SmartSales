@@ -10,6 +10,7 @@ export const useDeleteItem = () => {
 
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["items"] });
+            qc.invalidateQueries({ queryKey: ["stoneItems"] }); // item lists on entry screens
         },
     });
 };

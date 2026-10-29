@@ -31,6 +31,7 @@ import TransactionLoader from "@/component/loader/Transactionloader";
 
 //Key Management
 import { useGlobalKey } from "@/components/key/useGlobalKey";
+import { useDebounce } from "@/components/ui/ComboBox/hooks/useDebounce";
 
 // Hooks
 
@@ -137,14 +138,12 @@ export default function PurchasePage() {
 
     const { data: useApiRate } = useSoftControlById('USE_API_RATE');
 
-    console.log(useApiRate, 'softControl in header form');
     const isApiRateEnabled = useApiRate?.CTLTEXT === 'Y';
 
     const { data: multiplyHmcWithPcs } = useSoftControlById('PU_HMC_FINALAMT');
 
     const usePcsBySoftControl = multiplyHmcWithPcs?.CTLTEXT === "Y";
 
-    console.log(isApiRateEnabled, 'isApiRateEnabled');
 
     const initialDraftRowsRef = useRef<any[]>([]);
     const initialClosingRef = useRef<BaseClosingFormDetails>(
@@ -174,7 +173,6 @@ export default function PurchasePage() {
         S: "SILVER 916.00", // ✅ FIXED
     } as const;
 
-    console.log(initialClosingRef.current, 'currentClosingRef');
 
     /* ================================
        GLOBAL  HEADER MANAGEMENT
@@ -199,7 +197,6 @@ export default function PurchasePage() {
     const { isOpen, status, title, description, openLoader, resolveLoader, closeLoader } = useTransactionLoader();
 
 
-    console.log(isModifying, 'isModifying')
     /* ================================
     VALIDATION FROM SOFT CONTROL
 ================================ */
@@ -238,7 +235,6 @@ export default function PurchasePage() {
 
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [saleCustomerList, setSaleCustomerList] = useState<{ label: string, value: string }[]>([]);
 
     const [isStockDrawerOpen, setIsStockDrawerOpen] = useState(false);
     const [showStock, setShowStock] = useState<string>("PURE");
@@ -276,7 +272,6 @@ export default function PurchasePage() {
         itemId: '',
         accode: ''
     });
-    console.log(printData, 'printData');
 
     const filter = ''
 
@@ -327,11 +322,9 @@ export default function PurchasePage() {
 
     const { theme } = useTheme();
     const { data: itemsData } = useStoneItems();
-    console.log(itemsData,'itemsData');
     const { data: tagedItems } = useStoneItems({ STOCKTYPE: 'T' });
     const { data: nonTagedItemList } = useStoneItems({ STOCKTYPE: 'N' });
 
-    console.log(tagedItems, 'tagedItems')
 
     const filters = {
         accountType: "PR"
@@ -357,7 +350,6 @@ export default function PurchasePage() {
     const { data: pureStockList = [], refetch: goldStockRefetch } = usePureGoldData(filter, cleanedFilters, isEditing ? Number(headerForm.ENTRYNO) : undefined, isEditing ? "PU" : undefined);
     const { data: itemsStock, refetch: itemStockRefetch } = useOrnamentData(filter, 'N', isEditing ? Number(headerForm.ENTRYNO) : undefined, isEditing ? "PU" : undefined);
 
-    console.log(pureStockList, 'pureStockListpureStockList');
 
 
     const { data: allPureGoldNames } = usePureGoldNames();
@@ -367,18 +359,20 @@ export default function PurchasePage() {
         isFetching,
         isSuccess } = useTransactionByTransId(selectedTransactionId, "purchase");
 
-    console.log(transactionsById, 'transactionsById');
 
 
 
 
     /*------------------------------- BILL DETAILS API ----------------------------*/
 
+    // Entry and tag numbers are typed: wait for a pause instead of one
+    // bill lookup per keystroke.
+    const debouncedBillParams = useDebounce(billParams, 300);
     const { data: billDetails, isLoading: billDetailsLoading, isError: billDetailsError } = useBillDetails({
         ACCODE: Number(accCode),
-        ENTRYNO: Number(billParams.ENTRYNO),
-        BILLDATE: billParams.BILLDATE,
-        TAGNO: billParams.TAGNO
+        ENTRYNO: Number(debouncedBillParams.ENTRYNO),
+        BILLDATE: debouncedBillParams.BILLDATE,
+        TAGNO: debouncedBillParams.TAGNO
     });
 
     const billDetailsList = useMemo(() => {
@@ -386,7 +380,6 @@ export default function PurchasePage() {
         return Array.isArray(billList) ? billList : []
     }, [billDetails]);
 
-    console.log(billDetailsList, billParams, 'billDetailsList')
 
 
     const { data: otherChargesData } = useActiveOtherCharges();
@@ -480,7 +473,6 @@ export default function PurchasePage() {
        Selected Collection For Stock List
     ================================ */
     const itemsStockList = itemsStock?.data || [];
-    console.log(itemsStockList, 'itemsStockList')
 
 
     const selectedStockData = useMemo(() => {
@@ -489,26 +481,21 @@ export default function PurchasePage() {
             : itemsStockList;
     }, [showStock, pureStockList, itemsStockList]);
 
-    console.log(selectedStockData, 'selectedStock');
-    console.log(pureStockList, 'pureStockList');
 
 
     /* ================================
        Customer Data
     ================================ */
-    const customerList = Array.isArray(allCustomer?.data?.acheads) ? allCustomer.data.acheads : [];
-
-    useEffect(() => {
-        if (!customerList) return;
-        const purchaser = customerList.map((item: any) => {
-            return {
-                label: item.ACNAME,
-                value: item.ACCODE.toString()
-            }
-        })
-        setSaleCustomerList(purchaser);
-
-    }, [customerList])
+    // Derived with useMemo: the old state + effect copy got a new [] on every
+    // render while customers were loading (or empty), which looped renders.
+    const saleCustomerList = useMemo<{ label: string; value: string }[]>(() => {
+        const acheads = allCustomer?.data?.acheads;
+        if (!Array.isArray(acheads)) return [];
+        return acheads.map((item: any) => ({
+            label: item.ACNAME,
+            value: item.ACCODE.toString(),
+        }));
+    }, [allCustomer]);
 
     useEffect(() => {
         if (!Array.isArray(allPureGoldNames)) return;
@@ -575,7 +562,7 @@ export default function PurchasePage() {
         tagedItems?.map((item: any) => ({
             label: item.itemName,
             value: item.itemId.toString(),
-        })) ?? [], []);
+        })) ?? [], [tagedItems]);
 
     const nonTagedItems = useMemo(
         () =>
@@ -868,7 +855,6 @@ export default function PurchasePage() {
        Helper Functions
     ================================ */
     const isIssueType = (transactionType: TransactionType) => {
-        console.log(transactionType, 'transactionTypetransactionType')
         return transactionType.code.toUpperCase() === "ISP" || transactionType.code.toUpperCase() === "REC";
     };
 
@@ -936,7 +922,6 @@ export default function PurchasePage() {
 
         setEditingSno(null);
 
-        console.log(data, 'traneditdata');
 
         requestAnimationFrame(() => {
 
@@ -996,7 +981,6 @@ export default function PurchasePage() {
        ================================ */
     const { closingDetails, setClosingDetails, resetBalance } = usePurchaseBalanceSummary();
 
-    console.log(closingDetails, 'closingDetailsfromstore');
 
 
     const totalFinalStoneAmount = useMemo(() => {
@@ -1021,7 +1005,6 @@ export default function PurchasePage() {
 
     const { closingPure, closingCash } = useClosingCalculation(closingDetails, openingBalances, Number(headerForm.RATEGM || 0));
 
-    console.log(closingDetails, 'closingDetails');
 
 
     // ✅ Always reads latest — even before re-render
@@ -1076,13 +1059,11 @@ export default function PurchasePage() {
         let availability = null;
 
         if (issueStock) {
-            console.log(stockRow, 'vstockRow')
             const pureId = stockRow.pureId;
             const touch = stockRow.aTouch;
 
             availability = getStockAvailability(pureId, touch);
 
-            console.log(availability, 'availability')
 
             if (!availability || availability.remaining <= 0) {
                 toaster.create({
@@ -1100,7 +1081,6 @@ export default function PurchasePage() {
             availability,
             draftRows,
         });
-        console.log(targetType, 'targetType')
 
         // ✅ ADD ROW
         setDraftRows(prev => [...prev, newRow]);
@@ -1120,7 +1100,6 @@ export default function PurchasePage() {
     ================================ */
 
     const originalTransactionData = editingRowsData ? editingRowsData : [{}];
-    console.log(editingRowsData, 'editingRowsData')
 
     /*--------------------------------STOCK CHECKING------------------------ */
 
@@ -1209,7 +1188,6 @@ export default function PurchasePage() {
     }, [closingDetails, getClosingDetailsPayload]);
 
 
-    console.log(isDraftRowsChanged(), isClosingChanged(), 'isDraftRowsChanged, isClosingChanged')
 
 
 
@@ -1327,7 +1305,12 @@ export default function PurchasePage() {
 
     };
 
+    // Blocks a second save/update (Alt+S pressed twice, button + remark modal)
+    // while one is still in flight; isPending only updates after a render.
+    const submittingRef = useRef(false);
+
     const handleSaveTransaction = () => {
+        if (submittingRef.current) return;
 
         setEditingState({ rowId: null, transactionType: null });
 
@@ -1341,7 +1324,6 @@ export default function PurchasePage() {
         }
 
         const result = buildTransactionRequest();
-        console.log("Create Transaction Payload:", result.payload);
 
         if (!result.valid || !result.payload) {
             toaster.create({
@@ -1354,9 +1336,7 @@ export default function PurchasePage() {
 
 
         openLoader("save");
-
-
-
+        submittingRef.current = true;
 
         createTransaction.mutate(
             { payload: result.payload, TRANTYPE: "purchase" },
@@ -1389,12 +1369,16 @@ export default function PurchasePage() {
                     setTimeout(() => {
                         resolveLoader("error", "save", error?.message || "Failed to save transaction.");
                     }, 500);
-                }
+                },
+                onSettled: () => {
+                    submittingRef.current = false;
+                },
             }
         );
     };
 
     const handleUpdateTransaction = async () => {
+        if (submittingRef.current) return;
 
         setEditingState({ rowId: null, transactionType: null });
 
@@ -1409,7 +1393,6 @@ export default function PurchasePage() {
 
         const result = buildTransactionRequest();
 
-        console.log(result.payload, 'updatepayload');
 
         if (!result.valid || !result.payload) {
             toaster.create({
@@ -1421,6 +1404,7 @@ export default function PurchasePage() {
         }
 
         openLoader("update");
+        submittingRef.current = true;
 
         try {
 
@@ -1463,6 +1447,8 @@ export default function PurchasePage() {
             setTimeout(() => {
                 resolveLoader("error", "update", error.message || "Failed to update transaction.");
             }, 500);
+        } finally {
+            submittingRef.current = false;
         }
     };
 

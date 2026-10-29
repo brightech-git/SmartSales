@@ -1,9 +1,9 @@
-import { useMutation , QueryClient } from "@tanstack/react-query";
+import { useMutation , useQueryClient } from "@tanstack/react-query";
 import { TouchMastService } from "@/service/TouchService";
 import { toastCreated, toastError } from "@/component/toast/toast";
 
 const useTouchMastCreate = () =>{
-    const queryClient = new QueryClient();
+    const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: TouchMastService().createTouchMast,

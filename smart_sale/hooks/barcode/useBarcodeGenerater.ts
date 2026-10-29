@@ -153,7 +153,7 @@ export function useBarcodeGenerate() {
 
   const { data: toleranceData } = useSoftControlById("LOT-TOLERANCE");
 
-  const { data: stoneToleranceData } = useSoftControlById("	LOT_STONE_TOLERANCE");
+  const { data: stoneToleranceData } = useSoftControlById("LOT_STONE_TOLERANCE");
 
   const tolerance = useMemo(() => {
     return Number(toleranceData?.CTLTEXT ?? 0);
@@ -164,7 +164,6 @@ export function useBarcodeGenerate() {
     return Number(stoneToleranceData?.CTLTEXT ?? 0);
   }, [stoneToleranceData]);
 
-  console.log(stoneTolerance, 'stoneTolerance');
 
   const barcodeQueryParams = useMemo(() => ({
     ACCODE: Number(headerForm.COMPANYNAME),
@@ -199,13 +198,8 @@ export function useBarcodeGenerate() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(tagFilterParams)]);
 
-  const { data: tagEntryNos, refetch: refetchTagList } = useTagEntryNos(filteredTagParams);
-
-  const tagFilterParamsKey = JSON.stringify(tagFilterParams);
-  useEffect(() => {
-    refetchTagList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tagFilterParamsKey]);
+  // The query key includes the filters, so a filter change fetches by itself.
+  const { data: tagEntryNos } = useTagEntryNos(filteredTagParams);
 
   const { data: tagDetails } = useTagedDetailsByEntryNo(selectedEntryNo);
 
@@ -393,8 +387,6 @@ export function useBarcodeGenerate() {
 
     let effectiveBalance = { ...remainingByRef };
 
-    console.log(effectiveBalance, 'effectiveBalance');
-    console.log(editingRowId, originalRow, 'editing');
 
     if (editingRowId && originalRow) {
       effectiveBalance = {
@@ -404,7 +396,6 @@ export function useBarcodeGenerate() {
       };
     }
 
-    console.log(effectiveBalance, 'effectiveBalance after edit')
 
     const errors = validateSingleRow(
 
@@ -422,7 +413,6 @@ export function useBarcodeGenerate() {
       stoneTolerance
     );
 
-    console.log(errors, 'row errors');
 
     if (Object.keys(errors).length) {
       setTouched(FIELD_ORDER.reduce((a, k) => ({ ...a, [k]: true }), {} as Record<string, boolean>));
@@ -555,7 +545,6 @@ export function useBarcodeGenerate() {
     const remainingByRef = remainingRef.current;
     let effectiveBalance = { ...remainingByRef };
 
-    console.log(stoneTolerance, 'stoneTolerance in load');
 
     if (!parsedRows.length) return;
     if (!validateHeaderWithToast(headerForm)) return;
@@ -594,7 +583,6 @@ export function useBarcodeGenerate() {
 
     if (!parsedRows.length) return;
 
-    console.log(parsedRows, "parsedRows");
 
     if (!validateHeaderWithToast(headerForm)) return;
 
@@ -758,7 +746,6 @@ export function useBarcodeGenerate() {
       };
     });
 
-    console.log(updatedRows, "updatedRows");
 
     /**
      * ==========================================
@@ -835,7 +822,6 @@ export function useBarcodeGenerate() {
     if (!validateRows({ rows, limits, balance: effectiveBalance, tolerance, stnTolerance: stoneTolerance })) return;
     const { purchaseDetails, taggingDetails } = buildPayload();
     setIsSubmittingTag(true);
-    console.log(purchaseDetails, taggingDetails, 'createTag');
 
     createTag(
       { RETAG: purchaseDetails.RETAG, PURCHASEDETAILS: purchaseDetails, TAGGINGDETAILS: taggingDetails },
@@ -865,7 +851,6 @@ export function useBarcodeGenerate() {
     if (!validateRows({ rows, limits, balance: effectiveBalance, countOnlyNew: false, tolerance, stnTolerance: stoneTolerance })) return;
     const { purchaseDetails, taggingDetails } = buildPayload();
     setIsSubmittingTag(true);
-    console.log("update tag", purchaseDetails, taggingDetails)
 
     updateTag(
       { RETAG: purchaseDetails.RETAG, PURCHASEDETAILS: purchaseDetails, TAGGINGDETAILS: taggingDetails, id: Number(headerForm.ENTRYNO) },
@@ -878,7 +863,6 @@ export function useBarcodeGenerate() {
           handleClear();
         },
         onError: (err: any) => {
-          console.log(err?.response, 'responseerr');
           toaster.create({ title: "Error", description: err?.data || "Update failed", type: "error", duration: 2000 });
         },
         onSettled: () => setIsSubmittingTag(false),
@@ -892,7 +876,6 @@ export function useBarcodeGenerate() {
 
     const purchase = tagDetails.PURCHASEDETAILS;
     const apiRows = tagDetails.TAGGINGDETAILS || [];
-    console.log(purchase, 'purchase')
 
     // ✅ Always restore header form
     setHeaderForm({

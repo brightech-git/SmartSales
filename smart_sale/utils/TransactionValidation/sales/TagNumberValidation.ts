@@ -6,7 +6,6 @@ type Item = {
 };
 
 export const useIsTaggedItem = (items: Item[]) => {
-    console.log(items,'itemsitems')
 
     if(!items) return () => false;
 

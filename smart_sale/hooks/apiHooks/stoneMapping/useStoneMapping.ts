@@ -1,4 +1,4 @@
-import { useMutation, useQuery, QueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { StoneMappingService } from "@/service/StoneMapping";
 import { ApiResponse } from "@/types/api/apiResponse";
@@ -14,18 +14,20 @@ import {
     StoneMappingForm,
 } from "@/types/stoneMapping/StoneMappingTypes";
 
-const queryClient = new QueryClient();
 
 /* ---------------- CREATE ---------------- */
 
 export const useStoneMappingCreate = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: StoneMappingService().createStoneMapping,
 
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["hmc"],
+                queryKey: ["stoneMapping"],
             });
+            queryClient.invalidateQueries({ queryKey: ["stoneMapping-by-id"] });
+            queryClient.invalidateQueries({ queryKey: ["stoneMapping-filter"] });
         },
 
         onError: (error) => {
@@ -39,7 +41,7 @@ export const useStoneMappingCreate = () => {
 
 export const useStoneMappingData = (filter?: string, advancedFilter: Record<string, any> = {}) => {
     return useQuery({
-        queryKey: ["hmc", filter, advancedFilter],
+        queryKey: ["stoneMapping", filter, advancedFilter],
 
         queryFn: () =>
             StoneMappingService().getStoneMappingData(filter, advancedFilter),
@@ -54,7 +56,7 @@ export const useStoneMappingDataById = (
     id: number | null
 ) => {
     return useQuery({
-        queryKey: ["hmc-by-id", id],
+        queryKey: ["stoneMapping-by-id", id],
 
         queryFn: () =>
             StoneMappingService().getStoneMappingById(id),
@@ -68,6 +70,7 @@ export const useStoneMappingDataById = (
 /* ---------------- UPDATE ---------------- */
 
 export const useModifyStoneMappingById = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: (data: {
             id: number;
@@ -77,6 +80,11 @@ export const useModifyStoneMappingById = () => {
                 data.id,
                 data.formData
             ),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["stoneMapping"] });
+            queryClient.invalidateQueries({ queryKey: ["stoneMapping-by-id"] });
+            queryClient.invalidateQueries({ queryKey: ["stoneMapping-filter"] });
+        },
     });
 };
 
@@ -87,7 +95,7 @@ export const useStoneMappingByFilter = (
     enabled: boolean
 ) => {
     return useQuery({
-        queryKey: ["hmc-filter", filter],
+        queryKey: ["stoneMapping-filter", filter],
 
         queryFn: () =>
             StoneMappingService().getStoneMappingByFilter(filter),

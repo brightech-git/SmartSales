@@ -53,8 +53,6 @@ export const useApiQuery = <
             // Resolve dynamic URL if it's a function
       
             const resolvedUrl = typeof url === "function" ? url(params as any) : url;
-            console.log(resolvedUrl,'resolvedUrl')
-            console.log(params,'resolvedUrlWithParams')
             const res = await axiosInstance.get<ApiResponse<TData>>(resolvedUrl, { params });
             return res.data;
         },

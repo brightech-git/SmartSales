@@ -45,8 +45,9 @@ export const useUpdateCompany = () => {
         mutationFn: ({ id, payload, logo }: { id: string; payload: CreateCompanyPayload; logo?: File|null }) =>
             CompanyService.updateById(id, payload, logo),
         
-        onSuccess: () => {
+        onSuccess: (_data, { id }) => {
             queryClient.invalidateQueries({ queryKey: ["companies"] });
+            queryClient.invalidateQueries({ queryKey: ["company", id] });
             toastUpdated("Company");
 
         },
