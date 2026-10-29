@@ -197,7 +197,7 @@ filter }: Props) => {
             }}
             aria-label="Open keyboard shortcuts"
           >
-            <Keyboard color={theme.colors.primary} size={16} />
+            <Keyboard style={{ color: theme.colors.primary }} size={16} />
           </Box>
         </Tooltip>
       </Box>
@@ -243,10 +243,10 @@ filter }: Props) => {
                   w="28px"
                   h="28px"
                   borderRadius="7px"
-                  bg={`${theme.colors.accient}15`}
+                  bg={`color-mix(in srgb, ${theme.colors.accient} 8%, transparent)`}
                   flexShrink={0}
                 >
-                  <Keyboard color={theme.colors.primary} size={14} />
+                  <Keyboard style={{ color: theme.colors.primary }} size={14} />
                 </Box>
 
                 <Box flex={1} minW={0}>
@@ -299,7 +299,7 @@ filter }: Props) => {
                     bg={"gray.50"}
                     _focusWithin={{
                       borderColor: theme.colors.accient,
-                      boxShadow: `0 0 0 2px ${theme.colors.accient}20`,
+                      boxShadow: `0 0 0 2px color-mix(in srgb, ${theme.colors.accient} 12%, transparent)`,
                       bg: "white",
                     }}
                     transition="all 0.15s ease"

@@ -19,6 +19,9 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { formatNumber } from "@/utils/format/number";
+import { DECIMALS } from "@/utils/format/config";
+import { formatDateTime } from "@/utils/format/date";
 
 /* ═══════════════════════════════════════
    CONSTANTS
@@ -93,10 +96,8 @@ const isNumeric = (key: string, rows: Record<string, any>[]) => {
   });
 };
 
-const fmtNum = (v: any) => {
-  const n = parseFloat(v);
-  return isNaN(n) ? (v ?? "-") : n.toFixed(3);
-};
+// Weights to 3 decimals without grouping (also used in exports); non-numbers pass through.
+const fmtNum = (v: any) => formatNumber(v, { decimals: DECIMALS.weight, grouping: false, fallback: v ?? "-" });
 
 /* ═══════════════════════════════════════
    TYPES
@@ -362,7 +363,7 @@ const [toDate, setToDate] = useState<string>(getToday());
     const doc  = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const pW   = doc.internal.pageSize.getWidth();
     const pH   = doc.internal.pageSize.getHeight();
-    const now  = new Date().toLocaleString();
+    const now  = formatDateTime(new Date());
 
     autoTable(doc, {
       head: [activeCols.map(fmtLabel)],

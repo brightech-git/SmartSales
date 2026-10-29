@@ -1,10 +1,4 @@
-export const getImage = (imageUrl?: string | null): string | undefined => {
-    if (!imageUrl) return undefined;
+import { resolveImageUrl } from "./imageUrl";
 
-    const BASE_URL = "https://www.smartsaleson.com";
-
-    // Ensure no double slashes
-    return imageUrl.startsWith("http")
-        ? imageUrl
-        : `${BASE_URL}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
-};
+/** Kept for existing callers; new code should use resolveImageUrl. */
+export const getImage = (imageUrl?: string | null): string | undefined => resolveImageUrl(imageUrl);

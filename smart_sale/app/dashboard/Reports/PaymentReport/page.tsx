@@ -25,6 +25,7 @@ import { usePrint } from "@/context/print/usePrintContext";
 import { PrintColumn } from "@/component/screens/PrintPreviewScreen";
 import { formatDateForShow } from "@/utils/format/formatDateForAPI";
 import { formatToFixed } from "@/utils/format/numberFormat";
+import { formatAmount } from "@/utils/format/number";
 
 
 // ─── Column definitions (read-only, no editing) ───────────────────────────────
@@ -109,13 +110,7 @@ function SummaryCard({
     value: number | null | undefined;
     accent: string;
 }) {
-    const formatted =
-        value == null
-            ? "—"
-            : value.toLocaleString("en-IN", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            });
+    const formatted = formatAmount(value, { fallback: "—" });
 
     return (
         <div

@@ -32,7 +32,7 @@ import { useOtherCharges, useOtherChargeById, useUpdateOtherCharges, useCreateOt
 import { AiOutlineSave } from "react-icons/ai";
 import { useRouter } from "next/navigation";
 import { CapitalizedInput } from "@/components/ui/CapitalizedInput";
-import { useAllMetals } from "@/hooks/apiHooks/metal/useMetals";
+import { useAllMetals } from "@/modules/metal/hooks/useMetals";
 import SearchBar from "@/component/search/SearchBar";
 
 import { DynamicForm } from "@/component/form/DynamicForm";

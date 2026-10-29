@@ -5,6 +5,7 @@ import { Edit2, Trash2, Save, X, Plus } from 'lucide-react';
 import EditableCell from './EditableCell';
 import { Button, Box } from '@chakra-ui/react';
 import { formatToFixed } from '@/utils/format/numberFormat';
+import { formatDate } from "@/utils/format/date";
 
 export interface TableColumn {
     key: string;
@@ -306,7 +307,7 @@ const EditableTable: React.FC<TableProps> = ({
         if ((column.type === "numbers" || column.type === "number") && Number(column.decimalScale) > 1) {
             return formatToFixed(value, column.decimalScale);
         }
-        if (column.type === 'date') return new Date(value).toLocaleDateString("en-GB");
+        if (column.type === 'date') return formatDate(value, { fallback: String(value ?? "") });
         return value;
     };
 

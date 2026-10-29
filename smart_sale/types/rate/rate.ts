@@ -1,22 +1,2 @@
-export interface RatePayload {
-    "GOLD 100":number;
-    "GOLD 916":number;
-    "SILVER 100":number;
-    "SILVER 916":number;
-}
-
-export interface RateForm {
-    "GOLD 100": string;
-    "GOLD 916": string;
-    "SILVER 100": string;
-    "SILVER 916": string;
-}
-
-
-export interface Rates {
-    "GOLD 100.00": number;
-    "GOLD 916.00": number;
-    "SILVER 100.00": number;
-    "SILVER 916.00": number;
-    "LAST_UPDATED" :string;
-}
+/** @deprecated Moved to @/modules/rate/types/rate; import from there. Kept so existing imports keep working. */
+export * from "@/modules/rate/types/rate";

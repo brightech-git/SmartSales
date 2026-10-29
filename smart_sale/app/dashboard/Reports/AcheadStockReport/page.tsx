@@ -22,6 +22,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { formatDateTime } from "@/utils/format/date";
 
 /* ==================== TYPES ==================== */
 
@@ -541,7 +542,7 @@ function StockReport() {
   /* ---- PDF Export ---- */
   const exportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const now = new Date().toLocaleString();
+    const now = formatDateTime(new Date());
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 

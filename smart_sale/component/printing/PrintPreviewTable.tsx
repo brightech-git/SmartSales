@@ -3,6 +3,7 @@
 import React, { forwardRef, useMemo } from "react";
 import { Box, Text } from "@chakra-ui/react";
 import type { PrintColumn } from "@/component/screens/PrintPreviewScreen";
+import { formatNumber } from "@/utils/format/number";
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -377,15 +378,8 @@ export const PrintPreviewTable = forwardRef<HTMLDivElement, PrintPreviewTablePro
                                                 : "left";
 
                                         // Fix: Format total with column's decimal scale
-                                        const formatTotalWithScale = (value: number, decimalScale: number): string => {
-                                            if (value === null || value === undefined) return "";
-                                            if (typeof value !== 'number') return "";
-
-                                            return value.toLocaleString(undefined, {
-                                                minimumFractionDigits: decimalScale,
-                                                maximumFractionDigits: decimalScale
-                                            });
-                                        };
+                                        const formatTotalWithScale = (value: number, decimalScale: number): string =>
+                                            typeof value === "number" ? formatNumber(value, { decimals: decimalScale }) : "";
 
                                         return (
                                             <td

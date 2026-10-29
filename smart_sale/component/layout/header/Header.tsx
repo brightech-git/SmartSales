@@ -1,27 +1,17 @@
 "use client";
 
 import { Box, HStack, Text, Flex, Separator, useMediaQuery } from "@chakra-ui/react";
-import { CalendarDays, Clock, Menu as MenuIcon, Moon, PanelLeftClose, PanelLeftOpen, SquareStack, Sun, AppWindow } from "lucide-react";
+import { CalendarDays, Clock, Menu as MenuIcon, Moon, Palette, PanelLeftClose, PanelLeftOpen, SquareStack, Sun, AppWindow } from "lucide-react";
 import { useSidebar } from "@/context/layout/SideBarContext";
 import { useTheme } from "@/context/theme/themeContext";
-import { useRates } from "@/hooks/apiHooks/rate/useRate";
-import { MetalRatesMenu } from "../rates/MetalRates";
+import { useRates } from "@/modules/rate/hooks/useRate";
+import { MetalRatesMenu } from "@/modules/rate/components/MetalRates";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { BrandMark, IconAction } from "@/components/primitives";
-
-/** "ItemMaster" → "Item Master"; "pureGold" → "Pure Gold". */
-const toTitle = (value: string) => {
-    const spaced = value.replace(/([a-z])([A-Z])/g, "$1 $2").trim();
-    return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
-};
-
-const formatDate = (date: Date) => {
-    const dd = String(date.getDate()).padStart(2, "0");
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy = date.getFullYear();
-    return `${dd}-${mm}-${yyyy}`;
-};
+import { formatDate, formatTime } from "@/utils/format/date";
+import { toTitle } from "@/utils/text/text";
+import { AppearanceDrawer } from "../appearance/AppearanceDrawer";
 
 const Header = ({ onOpenMenu }: { onOpenMenu: () => void }) => {
     const { mode, toggleTheme } = useTheme();
@@ -38,17 +28,10 @@ const Header = ({ onOpenMenu }: { onOpenMenu: () => void }) => {
     const pageTitle = toTitle(lastSegment);
 
     const [timeNow, setTimeNow] = useState("");
+    const [appearanceOpen, setAppearanceOpen] = useState(false);
 
     useEffect(() => {
-        const tick = () =>
-            setTimeNow(
-                new Date().toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: true,
-                })
-            );
+        const tick = () => setTimeNow(formatTime(new Date(), { seconds: true }));
         tick();
         const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
@@ -138,8 +121,16 @@ const Header = ({ onOpenMenu }: { onOpenMenu: () => void }) => {
                         icon={mode === "light" ? <Moon /> : <Sun />}
                         onClick={toggleTheme}
                     />
+                    <IconAction
+                        label="Appearance"
+                        icon={<Palette />}
+                        onClick={() => setAppearanceOpen(true)}
+                        aria-haspopup="dialog"
+                        aria-expanded={appearanceOpen}
+                    />
                 </HStack>
             </Flex>
+            <AppearanceDrawer open={appearanceOpen} onClose={() => setAppearanceOpen(false)} />
         </Box>
     );
 };

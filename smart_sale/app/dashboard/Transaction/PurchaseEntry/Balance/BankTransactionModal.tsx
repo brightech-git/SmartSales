@@ -17,6 +17,7 @@ import { DatePickerInput } from "@/components/ui/DatePickerInput";
 import { toaster } from "@/components/ui/toaster";
 import { useGlobalKey } from "@/components/key/useGlobalKey";
 import { PaymentModes } from "@/data/bankDetails/BankDetailsData";
+import { formatCurrency } from "@/utils/format/number";
 
 export interface BankTransaction {
     ID: string;
@@ -430,7 +431,7 @@ export const BankTransactionModal = ({
             return mode?.label || row.TRANMODE;
         }
         if (col.key === "AMOUNT") {
-            return `₹${row.AMOUNT.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            return formatCurrency(row.AMOUNT);
         }
         if (col.key === "BANKID") {
             const item = bankAccList?.find(i => i.value === row.BANKID);
