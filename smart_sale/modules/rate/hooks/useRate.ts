@@ -27,7 +27,10 @@ export const useCreateRate = () => {
     return useMutation({
         mutationFn: (payload: RatePayload) => RateEntryService.createRate(payload),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['latest-rates' ,'rates'] });
+            // Two separate keys; one array ['latest-rates', 'rates'] matched
+            // neither, so the header and entry screens kept the old rate.
+            queryClient.invalidateQueries({ queryKey: ['latest-rates'] });
+            queryClient.invalidateQueries({ queryKey: ['rates'] });
             
         }
     })

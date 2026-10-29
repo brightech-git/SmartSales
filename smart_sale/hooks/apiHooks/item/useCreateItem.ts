@@ -12,6 +12,7 @@ export const useCreateItem = () => {
 
         onSuccess: () => {
             qc.invalidateQueries({ queryKey: ["items"] });
+            qc.invalidateQueries({ queryKey: ["stoneItems"] }); // item lists on entry screens
             toastCreated("Item");
         },
         onError:(error) =>{

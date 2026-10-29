@@ -41,7 +41,6 @@ export const TransactionService = {
                     ? BASE_PURCHASE_PATH
                     : BASE_SALES_PATH;
             const { data } = await axiosInstance.post(BASE_PATH ,payload);
-            console.log(data, 'datatransaction')
             return data;
         } catch (error: any) {
             throw error?.response?.data || error;
@@ -64,7 +63,6 @@ export const TransactionService = {
             const BASE_PATH = props.TRANTYPE === "purchase"
                 ? BASE_PURCHASE_PATH
                 : BASE_SALES_PATH;
-            console.log(params,  BASE_PATH,'BASE_PATH');
 
             const {data} = await axiosInstance.get(BASE_PATH, { params });
             return data ;
@@ -82,7 +80,6 @@ export const TransactionService = {
                 TRANTYPE === "purchase"
                     ? BASE_PURCHASE_PATH
                     : BASE_SALES_PATH;
-console.log(transId, BASE_PATH, 'getByTransId')
             const { data } = await axiosInstance.get(`${BASE_PATH}/${transId}`);
            
             return data;
@@ -185,7 +182,6 @@ console.log(transId, BASE_PATH, 'getByTransId')
 
 export const getBillWiseSales = async (params: billNoParams) => {
     try {
-        console.log(params,'paramforsales')
         const queryParams: any = {};
 
         if (params.ACCODE !== undefined) {

@@ -1,11 +1,10 @@
-import { useQuery ,useQueryClient } from "@tanstack/react-query";
+import { useQuery ,useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getBarcodeFilters, getBarcodeItemsDetails } from "@/service/BarcodeService";
 import { BarCodeFilter } from "@/types/barcode/BarcodeDetails";
 import { useApiQuery ,useApiMutation } from "../apiHook/ApiHook";
 import { CreateTag, CreateTagResponse } from "@/types/tagging/Tag";
 
 export const useBarcodeItems = (data:BarCodeFilter) => {
-  console.log(data,'paramsforuntaged')
   return useQuery({
     queryKey: ["barcode-items", data],
     queryFn: () => getBarcodeItemsDetails(data),
@@ -23,6 +22,18 @@ export const getBarcodeFilter = (param:any) => {
   });
 };
 
+/**
+ * Saving tags uses up untagged weight and advances the next tag number, so
+ * refresh the lot details (barcode-items) as well as the tag listing.
+ * Otherwise generating a second batch reuses the old start number.
+ */
+const invalidateAfterTagging = (queryClient: QueryClient) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["tag-details"] }),
+    queryClient.invalidateQueries({ queryKey: ["barcode-items"] }),
+    queryClient.invalidateQueries({ queryKey: ["ornaments"] }),
+  ]);
+
 export const useCreateTag = () =>{
   const queryClient = useQueryClient();
   return useApiMutation<CreateTagResponse,CreateTag>(
@@ -32,9 +43,7 @@ export const useCreateTag = () =>{
       method:"POST",
       queryKey:['barcode-items-filter'],
  
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['tag-details']})
-      },
+      onSuccess: () => invalidateAfterTagging(queryClient),
 
     }
   )
@@ -49,9 +58,7 @@ export const useUpdateTag = () => {
       params: (variables: CreateTag) => ({ RETAG: variables.RETAG }), // Access from body
       queryKey:['barcode-items-filter'],
       // enabled: !!id ,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['tag-details']})
-      }
+      onSuccess: () => invalidateAfterTagging(queryClient)
     }
   )
 }

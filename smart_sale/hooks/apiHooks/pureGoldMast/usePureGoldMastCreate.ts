@@ -1,9 +1,9 @@
-import { useMutation , QueryClient } from "@tanstack/react-query";
+import { useMutation , useQueryClient } from "@tanstack/react-query";
 import { pureGoldMastService } from "@/service/pureGoldService";
 import { toastCreated } from "@/component/toast/toast";
 
 export const useCreatePureGoldMast = () => {
-    const queryClient = new QueryClient();
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: pureGoldMastService().createPureGoldMast,
         onSuccess: () => {
@@ -16,12 +16,12 @@ export const useCreatePureGoldMast = () => {
 /* ----------------------Pure Gold Name ------------------*/
 
 export const useCreatePureGoldNmae = () => {
-    const queryClient = new QueryClient();
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: pureGoldMastService().createPureGoldName,
         onSuccess: () => {
             toastCreated("Pure Gold Name")
-            queryClient.invalidateQueries({ queryKey: ["pureGoldName"] });
+            queryClient.invalidateQueries({ queryKey: ["pureGoldDName"] });
         },
     });
 };

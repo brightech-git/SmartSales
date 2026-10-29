@@ -6,7 +6,7 @@ export default defineConfig({
         alias: { "@": fileURLToPath(new URL("./", import.meta.url)) },
     },
     test: {
-        include: ["**/*.test.ts"],
+        include: ["**/*.test.ts", "**/*.test.tsx"],
         exclude: ["node_modules/**", ".next/**", "out/**", "dist/**"],
         // Fixed zone so date tests behave the same on every machine.
         env: { TZ: "America/New_York" },

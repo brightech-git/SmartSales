@@ -14,14 +14,16 @@ export const useCreatePrint = ()=>{
 
 export const usePrint = ()=>{
     return useQuery({
-        queryKey:['printer-settings'],
+        queryKey:['printer-settings', 'all'],
         queryFn : getAllPrinterSettings
     })
 }
 
 export const useActivePrinter = () => {
     return useQuery({
-        queryKey: ['printer-settings'],
+        // Own key: sharing ['printer-settings'] with the full list meant Barcode
+        // Generate could receive the list instead of the active printer.
+        queryKey: ['printer-settings', 'active'],
         queryFn: getActivePrinterSettings
     })
 }

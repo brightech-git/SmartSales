@@ -175,13 +175,12 @@ export default function SalesPage() {
     /* ================================
     VALIDATOR FROM SOFT CONTROL
 ================================ */
-    const isBillTag = '	SR-TAGNO-REQ';
+    const isBillTag = 'SR-TAGNO-REQ';
 
     /*------------------- LOCAL STATE NON-PERSISTENT -------------------------------*/
 
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [saleCustomerList, setSaleCustomerList] = useState<{ label: string, value: string }[]>([]);
 
     const [isStockDrawerOpen, setIsStockDrawerOpen] = useState(false);
     const [showStock, setShowStock] = useState<string>("ITEM");
@@ -427,19 +426,16 @@ export default function SalesPage() {
     /* ================================
        Customer Data
     ================================ */
-    const customerList = Array.isArray(allCustomer?.data?.acheads) ? allCustomer.data.acheads : [];
-
-    useEffect(() => {
-        if (!customerList) return;
-        const purchaser = customerList.map((item: any) => {
-            return {
-                label: item.ACNAME,
-                value: item.ACCODE.toString()
-            }
-        })
-        setSaleCustomerList(purchaser);
-
-    }, [customerList])
+    // Derived with useMemo: the old state + effect copy got a new [] on every
+    // render while customers were loading (or empty), which looped renders.
+    const saleCustomerList = useMemo<{ label: string; value: string }[]>(() => {
+        const acheads = allCustomer?.data?.acheads;
+        if (!Array.isArray(acheads)) return [];
+        return acheads.map((item: any) => ({
+            label: item.ACNAME,
+            value: item.ACCODE.toString(),
+        }));
+    }, [allCustomer]);
 
     useEffect(() => {
         if (!Array.isArray(allPureGoldNames)) return;

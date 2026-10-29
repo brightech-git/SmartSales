@@ -31,6 +31,7 @@ import TransactionLoader, { TransactionStatus } from "@/component/loader/Transac
 
 //Key Management
 import { useGlobalKey } from "@/components/key/useGlobalKey";
+import { useDebounce } from "@/components/ui/ComboBox/hooks/useDebounce";
 
 // Hooks
 
@@ -166,7 +167,6 @@ export default function SalesPage() {
         isModifying
     } = useSalesHeader();
 
-    console.log(isModifying,'isModifying');
 
     // const { isOpen, status, title, description, openLoader, resolveLoader, closeLoader } = useTransactionLoader();
 
@@ -201,13 +201,12 @@ export default function SalesPage() {
     /* ================================
     VALIDATOR FROM SOFT CONTROL
 ================================ */
-    const isBillTag = '	SR-TAGNO-REQ';
+    const isBillTag = 'SR-TAGNO-REQ';
 
     /*------------------- LOCAL STATE NON-PERSISTENT -------------------------------*/
 
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [saleCustomerList, setSaleCustomerList] = useState<{ label: string, value: string }[]>([]);
 
     const [isStockDrawerOpen, setIsStockDrawerOpen] = useState(false);
     const [showStock, setShowStock] = useState<string>("PURE");
@@ -288,7 +287,6 @@ export default function SalesPage() {
 
     const { data: nonTagedItemList } = useStoneItems({ STOCKTYPE: 'N' });
 
-    console.log(tagedItems, 'tagedItems')
 
     const filters = {
         accountType: "CR"
@@ -333,11 +331,14 @@ export default function SalesPage() {
 
     /*------------------------------- BILL DETAILS API ----------------------------*/
 
+    // Entry and tag numbers are typed: wait for a pause instead of one
+    // bill lookup per keystroke.
+    const debouncedBillParams = useDebounce(billParams, 300);
     const { data: billDetails, isLoading: billDetailsLoading, isError: billDetailsError } = useBillDetails({
         ACCODE: Number(accCode),
-        ENTRYNO: Number(billParams.ENTRYNO),
-        BILLDATE: billParams.BILLDATE,
-        TAGNO: billParams.TAGNO
+        ENTRYNO: Number(debouncedBillParams.ENTRYNO),
+        BILLDATE: debouncedBillParams.BILLDATE,
+        TAGNO: debouncedBillParams.TAGNO
     });
 
     const billDetailsList = useMemo(() => {
@@ -345,7 +346,6 @@ export default function SalesPage() {
         return Array.isArray(billList) ? billList : []
     }, [billDetails]);
 
-    console.log(billDetailsList, billParams, 'billDetailsList')
 
 
     const { data: otherChargesData } = useActiveOtherCharges();
@@ -438,7 +438,6 @@ export default function SalesPage() {
        Selected Collection For Stock List
     ================================ */
     const itemsStockList = itemsStock?.data || [];
-    console.log(itemsStockList, 'itemsStockList')
 
 
     const selectedStockData = useMemo(() => {
@@ -451,19 +450,16 @@ export default function SalesPage() {
     /* ================================
        Customer Data
     ================================ */
-    const customerList = Array.isArray(allCustomer?.data?.acheads) ? allCustomer.data.acheads : [];
-
-    useEffect(() => {
-        if (!customerList) return;
-        const purchaser = customerList.map((item: any) => {
-            return {
-                label: item.ACNAME,
-                value: item.ACCODE.toString()
-            }
-        })
-        setSaleCustomerList(purchaser);
-
-    }, [customerList])
+    // Derived with useMemo: the old state + effect copy got a new [] on every
+    // render while customers were loading (or empty), which looped renders.
+    const saleCustomerList = useMemo<{ label: string; value: string }[]>(() => {
+        const acheads = allCustomer?.data?.acheads;
+        if (!Array.isArray(acheads)) return [];
+        return acheads.map((item: any) => ({
+            label: item.ACNAME,
+            value: item.ACCODE.toString(),
+        }));
+    }, [allCustomer]);
 
     useEffect(() => {
         if (!Array.isArray(allPureGoldNames)) return;
@@ -656,7 +652,6 @@ export default function SalesPage() {
     } = useSaleTransactionStore();
 
 
-    console.log(draftRows, 'draftRowsssssss');
     useGlobalKey(
         "alt+p",
         () => {
@@ -824,7 +819,6 @@ export default function SalesPage() {
        Helper Functions
     ================================ */
     const isIssueType = (transactionType: SaleTransactionType) => {
-        console.log(transactionType, 'transactionTypetransactionType')
         return transactionType.code.toUpperCase() === "IS" || transactionType.code.toUpperCase() === "RE";
     };
 
@@ -1024,16 +1018,13 @@ export default function SalesPage() {
         let availability = null;
 
         if (issueStock) {
-            console.log(stockRow, 'vstockRow')
             const pureId = stockRow.pureId;
             const touch = stockRow.aTouch;
 
-            console.log(pureId, 'pureIdpureId');
 
 
             availability = getStockAvailability(pureId, touch);
 
-            console.log(availability, 'availability')
 
             if (!availability || availability.remaining <= 0) {
                 toaster.create({
@@ -1051,7 +1042,6 @@ export default function SalesPage() {
             availability,
             draftRows,
         });
-        console.log(targetType, 'targetType')
 
         // ✅ ADD ROW
         setDraftRows(prev => [...prev, newRow]);
@@ -1069,7 +1059,6 @@ export default function SalesPage() {
     ================================ */
 
     const originalTransactionData = editingRowsData ? editingRowsData : [{}];
-    console.log(editingRowsData, 'editingRowsData')
 
     /*--------------------------------STOCK CHECKING------------------------ */
 
@@ -1148,7 +1137,6 @@ export default function SalesPage() {
 
 
 
-    console.log(isDraftRowsChanged(), isClosingChanged(), 'isDraftRowsChanged, isClosingChanged')
 
 
 
@@ -1268,7 +1256,12 @@ export default function SalesPage() {
 
 
 
+    // Blocks a second save/update (Alt+S pressed twice) while one is still in
+    // flight; isPending only updates after a render.
+    const submittingRef = useRef(false);
+
     const handleSaveTransaction = () => {
+        if (submittingRef.current) return;
         setEditingState({ rowId: null, transactionType: null });
 
         if (!headerForm.CUSTOMER) {
@@ -1291,33 +1284,34 @@ export default function SalesPage() {
             return;
         }
 
-        // ✅ Open loader in save mode
-        // openLoader("save");
-     
+        submittingRef.current = true;
 
         createTransaction.mutate(
             { payload: result.payload, TRANTYPE: "sales" },
             {
                 onSuccess: () => {
                     setEditingState({ rowId: null, transactionType: null });
-
-                    // Defer cleanup until after the loader finishes
-                    setTimeout(() => {
-                        handleResetDraft();
-                        // resolveLoader("success", "save");
-                    }, 500);
-
-                    // ✅ Resolve to success — loader auto-closes after 2s
-
+                    toaster.create({
+                        title: "Transaction Saved",
+                        description: "Transaction saved successfully",
+                        type: "success",
+                    });
+                    // Clear the draft straight away so a second Alt+S cannot
+                    // save the same rows again.
+                    handleResetDraft();
                 },
 
                 onError: (error: any) => {
+                    toaster.create({
+                        title: "Save Failed",
+                        description: error?.message || "Failed to save transaction.",
+                        type: "error",
+                    });
+                    openingBalanceRefetch();
+                },
 
-                    setTimeout(() => {
-                        openingBalanceRefetch();
-                        // resolveLoader("error", "save", error?.message || "Failed to save transaction.");
-                    }, 500);
-
+                onSettled: () => {
+                    submittingRef.current = false;
                 },
             }
         );
@@ -1328,6 +1322,7 @@ export default function SalesPage() {
     // ─────────────────────────────────────────────────────────────────────────────
 
     const handleUpdateTransaction = async () => {
+        if (submittingRef.current) return;
         setEditingState({ rowId: null, transactionType: null });
 
         if (!editingSno) {
@@ -1350,10 +1345,7 @@ export default function SalesPage() {
             return;
         }
 
-        console.log(result.payload, 'update tran')
-
-        // ✅ Open loader in update mode
-        // openLoader("update");
+        submittingRef.current = true;
 
         try {
             await updateTransaction.mutateAsync({
@@ -1363,35 +1355,25 @@ export default function SalesPage() {
             });
 
             setEditingSno(null);
+            toaster.create({
+                title: "Transaction Updated",
+                description: "Transaction updated successfully",
+                type: "success",
+            });
 
-
-
-            // Defer cleanup until after the loader finishes
-            setTimeout(() => {
-                goldStockRefetch();
-                itemStockRefetch();
-                openingBalanceRefetch();
-                resetStore();
-                resetBalance();
-                // setIsOpenSalesSaveModal(false);
-                handleResetDraft();
-
-            }, 500);
-            // setTimeout(() => {
-            //     // ✅ Resolve to success
-            //     // resolveLoader("success", "update");
-            // }, 600);
+            // The mutation already refreshed stock, balances and lists.
+            resetStore();
+            resetBalance();
+            handleResetDraft();
         } catch (error: any) {
-            // ✅ Resolve to error
-
-
-            setTimeout(() => {
-                openingBalanceRefetch();
-                // setIsOpenSalesSaveModal(false);
-            }, 500);
-            // setTimeout(() => {
-            //     resolveLoader("error", "update", error?.message || "Failed to update transaction.");
-            // }, 600);
+            toaster.create({
+                title: "Update Failed",
+                description: error?.message || "Failed to update transaction.",
+                type: "error",
+            });
+            openingBalanceRefetch();
+        } finally {
+            submittingRef.current = false;
         }
     };
   

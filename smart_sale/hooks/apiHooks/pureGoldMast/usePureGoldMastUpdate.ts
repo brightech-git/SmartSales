@@ -25,7 +25,7 @@ export const useUpdatePureGoldName = () => {
             pureGoldMastService().updatePureGoldName(id, data),
         onSuccess: () => {
             toastUpdated("Pure Gold Master");
-            queryClient.invalidateQueries({ queryKey: ["pureGoldName"] });
+            queryClient.invalidateQueries({ queryKey: ["pureGoldDName"] });
         },
     });
 };

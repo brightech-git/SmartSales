@@ -22,7 +22,7 @@ export const useCreateBankAccount = () => {
 
 export const useBankAccount = (ENTRYNO:number|null) =>{
     return  useQuery({
-        queryKey: ["bankAccount"],
+        queryKey: ["bankAccount", ENTRYNO],
         queryFn: () => getBankAccount(ENTRYNO),
         enabled: !!ENTRYNO,
     })
