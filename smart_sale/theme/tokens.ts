@@ -1,29 +1,26 @@
 import { defineTokens } from "@chakra-ui/react";
+import { SHADES } from "./palettes";
+
+const varScale = (name: "brand" | "accent") =>
+    Object.fromEntries(SHADES.map((shade) => [shade, { value: `var(--ss-${name}-${shade})` }]));
 
 /**
  * Raw design tokens for Smart Sales.
  *
- * Brand identity: a deep garnet (from the original #80004D) carries primary
- * actions and selection, and a restrained gold (from the original #D4AF37)
- * is used sparingly as a highlight for active navigation and rate data.
- * Everything else sits on a cool, quiet neutral scale so dense data stays
- * readable.
+ * Brand identity: the primary ("brand") colour carries actions and
+ * selection, and the secondary ("accent") colour is used sparingly for
+ * highlights. Both come from the palette chosen in the Appearance drawer;
+ * the default is garnet #80004D with gold #D4AF37. Everything else sits on
+ * a quiet neutral scale so dense data stays readable.
  */
 export const tokens = defineTokens({
     colors: {
-        brand: {
-            50: { value: "#FBF0F5" },
-            100: { value: "#F5DDEA" },
-            200: { value: "#E8B9D2" },
-            300: { value: "#D387B0" },
-            400: { value: "#B8508A" },
-            500: { value: "#9A1F66" },
-            600: { value: "#80004D" },
-            700: { value: "#68003F" },
-            800: { value: "#510032" },
-            900: { value: "#3B0024" },
-            950: { value: "#250017" },
-        },
+        // Primary and secondary scales come from the selected palette
+        // (theme/palettes.ts) through CSS variables, so the user can switch
+        // themes at runtime.
+        brand: varScale("brand"),
+        accent: varScale("accent"),
+        // Real gold, used where the colour means the metal (rates, gold items).
         gold: {
             50: { value: "#FDF9EC" },
             100: { value: "#FAF0CC" },
@@ -50,11 +47,6 @@ export const tokens = defineTokens({
             800: { value: "#2A2A33" },
             900: { value: "#1A1A21" },
             950: { value: "#111116" },
-        },
-        aubergine: {
-            700: { value: "#3A1630" },
-            800: { value: "#2C1024" },
-            900: { value: "#200B1A" },
         },
     },
 

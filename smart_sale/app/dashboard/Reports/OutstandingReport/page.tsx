@@ -14,7 +14,7 @@ import DataTable, { ColumnDef } from "@/component/table/ExcelReportTable";
 
 /*------------- HOOKS ------------------*/
 import { useStoneItems } from "@/hooks/apiHooks/item/useItems";
-import { useAllMetals } from "@/hooks/apiHooks/metal/useMetals";
+import { useAllMetals } from "@/modules/metal/hooks/useMetals";
 import { useOutstandingStockReport } from "@/hooks/apiHooks/SummaryReport/useSummaryReport";
 
 /*------------- CONFIG ------------------*/

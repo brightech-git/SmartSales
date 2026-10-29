@@ -33,6 +33,8 @@ import { useSessionStorage } from "@/utils/storage/useSessionStorage";
 import Logout from "@/component/logout/Logout";
 import { setStorage } from "@/utils/storage/storage";
 import { BrandMark } from "@/components/primitives";
+import { resolveImageUrl } from "@/utils/image/imageUrl";
+import { toTitle as humanize } from "@/utils/text/text";
 
 const MotionBox = motion(Box);
 const MotionVStack = motion(VStack);
@@ -61,7 +63,6 @@ const isSectionDirectItem = (content: SectionContent): content is SectionDirectI
     "type" in content && content.type === "direct";
 
 /** "RoleBased" → "Role Based", "RateEntry" → "Rate Entry" */
-const humanize = (key: string) => key.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 interface FlatSearchResult {
     label: string;
@@ -100,10 +101,10 @@ const NavRow = ({ label, icon, isActive, isTrail, isExpanded, depth = 0, onClick
             position="relative"
             cursor="pointer"
             textAlign="left"
-            color={isActive ? "sidebar.fg" : isTrail ? "sidebar.fg" : "sidebar.fgMuted"}
+            color={isActive ? "sidebar.activeFg" : isTrail ? "sidebar.fg" : "sidebar.fgMuted"}
             bg={isActive ? "sidebar.active" : "transparent"}
             transition="background-color 120ms, color 120ms"
-            _hover={{ bg: isActive ? "sidebar.active" : "sidebar.hover", color: "sidebar.fg" }}
+            _hover={{ bg: isActive ? "sidebar.active" : "sidebar.hover", color: isActive ? "sidebar.activeFg" : "sidebar.fg" }}
             _focusVisible={{ outline: "2px solid", outlineColor: "sidebar.accent", outlineOffset: "-2px" }}
             aria-current={isActive ? "page" : undefined}
             onClick={onClick}
@@ -123,7 +124,7 @@ const NavRow = ({ label, icon, isActive, isTrail, isExpanded, depth = 0, onClick
             }
         >
             {icon ? (
-                <Icon as={icon} boxSize={depth === 0 ? 4 : 3.5} flexShrink={0} color={isActive ? "sidebar.accent" : undefined} />
+                <Icon as={icon} boxSize={depth === 0 ? 4 : 3.5} flexShrink={0} color={isActive ? "sidebar.accent" : isTrail ? "sidebar.fg" : "sidebar.fgSubtle"} />
             ) : (
                 <Box w="4px" h="4px" borderRadius="full" bg={isActive ? "sidebar.accent" : "sidebar.fgSubtle"} flexShrink={0} mx={1.5} />
             )}
@@ -318,7 +319,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             borderRadius="l2"
                             textAlign="left"
                             cursor="pointer"
-                            color={isActive ? "sidebar.fg" : "sidebar.fgMuted"}
+                            color={isActive ? "sidebar.activeFg" : "sidebar.fgMuted"}
                             bg={isActive ? "sidebar.active" : "transparent"}
                             _hover={{ bg: "sidebar.hover", color: "sidebar.fg", "& .nav-arrow": { opacity: 1 } }}
                             onClick={() => {
@@ -348,7 +349,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         <NavRow
             key={item.route}
             label={item.label}
-            icon={depth === 0 ? item.icon : undefined}
+            icon={item.icon}
             isActive={pathname === item.route}
             isExpanded={isExpanded}
             depth={depth}
@@ -363,6 +364,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <Box key={item.label} w="100%">
                 <NavRow
                     label={item.label}
+                    icon={item.icon}
                     isTrail={parentHasActiveChild(item, pathname)}
                     isExpanded={isExpanded}
                     depth={1}
@@ -388,6 +390,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                 <NavRow
                                     key={child.route}
                                     label={child.label}
+                                    icon={child.icon}
                                     isActive={pathname === child.route}
                                     isExpanded={isExpanded}
                                     depth={1}
@@ -538,7 +541,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 py={2}
                 css={{
                     scrollbarWidth: "thin",
-                    scrollbarColor: "rgba(255,255,255,0.12) transparent",
+                    scrollbarColor: "var(--ss-sidebar-border) transparent",
                 }}
             >
                 {isSearching && isExpanded ? (
@@ -610,8 +613,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                         onClick={() => setLogoutOpen(true)}
                         aria-label="Log out"
                     >
-                        <Avatar.Root size="xs" colorPalette="gold" variant="solid">
+                        <Avatar.Root size="xs" colorPalette="brand" variant="subtle">
                             <Avatar.Fallback name={user?.USERNAME ?? "Admin"} />
+                            <Avatar.Image src={resolveImageUrl(user?.USERIMAGE)} alt="" />
                         </Avatar.Root>
                         {isExpanded && (
                             <>

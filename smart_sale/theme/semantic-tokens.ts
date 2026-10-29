@@ -14,8 +14,15 @@ const palette = (scale: string, solidShade = "600") => ({
 
 export const semanticTokens = defineSemanticTokens({
     colors: {
-        // Brand + accent palettes, usable as colorPalette="brand" / "gold"
+        // Primary / secondary palettes, usable as colorPalette="brand" / "accent".
+        // "gold" stays real gold for metal-specific UI (rates).
         brand: palette("brand"),
+        accent: {
+            ...palette("accent", "400"),
+            contrast: { value: { _light: "{colors.accent.950}", _dark: "{colors.accent.950}" } },
+            solid: { value: { _light: "{colors.accent.400}", _dark: "{colors.accent.400}" } },
+            fg: { value: { _light: "{colors.accent.700}", _dark: "{colors.accent.300}" } },
+        },
         gold: {
             ...palette("gold", "500"),
             contrast: { value: { _light: "{colors.gold.950}", _dark: "{colors.gold.950}" } },
@@ -62,18 +69,19 @@ export const semanticTokens = defineSemanticTokens({
             focus: { value: { _light: "{colors.brand.500}", _dark: "{colors.brand.300}" } },
         },
 
-        // Application shell. The sidebar stays dark in both modes so navigation
-        // reads as a separate layer from the work area.
+        // Application shell. Sidebar colours are CSS variables set in
+        // system.ts so the sidebar style (light / brand) can be switched at
+        // runtime from the Appearance drawer.
         sidebar: {
-            bg: { value: "{colors.aubergine.800}" },
-            bgRaised: { value: "{colors.aubergine.700}" },
-            border: { value: "rgba(255,255,255,0.08)" },
-            fg: { value: "rgba(255,255,255,0.92)" },
-            fgMuted: { value: "rgba(255,255,255,0.62)" },
-            fgSubtle: { value: "rgba(255,255,255,0.42)" },
-            hover: { value: "rgba(255,255,255,0.07)" },
-            active: { value: "rgba(212,175,55,0.14)" },
-            accent: { value: "{colors.gold.400}" },
+            bg: { value: "var(--ss-sidebar-bg)" },
+            border: { value: "var(--ss-sidebar-border)" },
+            fg: { value: "var(--ss-sidebar-fg)" },
+            fgMuted: { value: "var(--ss-sidebar-fg-muted)" },
+            fgSubtle: { value: "var(--ss-sidebar-fg-subtle)" },
+            hover: { value: "var(--ss-sidebar-hover)" },
+            active: { value: "var(--ss-sidebar-active)" },
+            activeFg: { value: "var(--ss-sidebar-active-fg)" },
+            accent: { value: "var(--ss-sidebar-accent)" },
         },
         header: {
             bg: { value: { _light: "{colors.white}", _dark: "{colors.neutral.900}" } },

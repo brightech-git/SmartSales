@@ -4,6 +4,8 @@ import { Company } from "@/service/CompanyService";
 import { SalesCLosing } from "@/types/transcation/SaleTransaction";
 import { useSoftControlById } from "@/hooks/apiHooks/softControl/useSoftControl";
 import { SoftControl } from "@/types/softcontrol/SoftControl";
+import { formatAmount, formatCurrency, formatWeight } from "@/utils/format/number";
+import { formatDate as formatDisplayDate } from "@/utils/format/date";
 
 // ─── API Data Types ───────────────────────────────────────────────────────────
 export interface SalesTransactionItems {
@@ -104,19 +106,15 @@ export interface IssueTotals {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmtWt = (n: number | null | undefined) =>
-  Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+// Prints show 0 for missing numbers and "—" for a missing date.
+const fmtWt = (n: number | null | undefined) => formatWeight(n, { fallback: formatWeight(0) });
 
 const fmtAmt = (n: number | null | undefined) =>
-  "₹ " + Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  formatCurrency(n, { display: "spaced", fallback: formatCurrency(0, { display: "spaced" }) });
 
-const fmtNormalAmt = (n: number | null | undefined) =>
-  Number(n || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtNormalAmt = (n: number | null | undefined) => formatAmount(n, { fallback: formatAmount(0) });
 
-const formatDate = (d: string | null | undefined) => {
-  if (!d) return "—";
-  try { return new Date(d).toLocaleDateString("en-IN"); } catch { return d; }
-};
+const formatDate = (d: string | null | undefined) => formatDisplayDate(d, { separator: "/", fallback: "—" });
 
 const getConvTypeLabel = (type: string | null | undefined): string => {
   if (!type) return "";

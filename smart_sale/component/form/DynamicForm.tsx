@@ -34,12 +34,12 @@ interface DynamicFormProps {
     labelFontSize?:string;
     gap?:number,
     errorToShow?:boolean
-    /** "themed" restyles labels and controls with the Smart Sales tokens. */
+    /** "themed" (default) restyles labels and controls with the Smart Sales tokens; "legacy" keeps the old look. */
     appearance?: "legacy" | "themed"
 }
 
-// Scoped overrides so migrated screens get themed controls without changing
-// the shared input components used by screens that are not migrated yet.
+// Scoped overrides so every DynamicForm gets themed controls without changing
+// the shared input components used outside forms.
 const themedControlsCss = {
     "& input:not([type=checkbox]):not([type=radio]), & select": {
         height: "34px",
@@ -51,6 +51,13 @@ const themedControlsCss = {
         color: "fg",
         px: "2.5",
         transition: "border-color 120ms, box-shadow 120ms",
+    },
+    // Leave room for InputGroup icons (₹, %, search) placed before or after the input.
+    "& div + input:not([type=checkbox]):not([type=radio])": {
+        ps: "34px",
+    },
+    "& input:not([type=checkbox]):not([type=radio]):has(+ div)": {
+        pe: "34px",
     },
     "& input:not([type=checkbox]):not([type=radio]):hover, & select:hover": {
         borderColor: "neutral.400",
@@ -81,7 +88,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     labelFontSize = "x-small",
     gap= 4,
     errorToShow = true,
-    appearance = "legacy",
+    appearance = "themed",
 }) => {
     const themed = appearance === "themed";
 

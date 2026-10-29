@@ -11,8 +11,8 @@
     "build": "next build",
     "export": "next export",
     "electron-dev": "concurrently \"next dev\" \"wait-on http://localhost:3000 && ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "dist": "npm run build && electron-builder"
-    
+    "dist": "npm run build && electron-builder",
+    "test": "vitest run"
   },
   "dependencies": {
     "@chakra-ui/anatomy": "^2.3.4",
@@ -69,6 +69,7 @@
     "eslint-config-next": "16.0.7",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "wait-on": "^7.0.1"
   },
   "build": {

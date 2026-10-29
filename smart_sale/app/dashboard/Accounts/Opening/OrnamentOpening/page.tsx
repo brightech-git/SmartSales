@@ -44,7 +44,7 @@ import { useRouter } from "next/navigation";
 import { FaFileExcel, FaPrint } from "react-icons/fa";
 import SearchBar from "@/component/search/SearchBar";
 
-import { useAllMetals } from "@/hooks/apiHooks/metal/useMetals";
+import { useAllMetals } from "@/modules/metal/hooks/useMetals";
 
 import { OrnamentOpeningFields } from "@/config/opening/ornamentOpening";
 import { DynamicForm } from "@/component/form/DynamicForm";

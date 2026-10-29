@@ -27,7 +27,7 @@ import { useItems } from "@/hooks/apiHooks/item/useItems";
 import { useCreateItem } from "@/hooks/apiHooks/item/useCreateItem";
 import { useUpdateItem } from "@/hooks/apiHooks/item/useUpdateItem";
 import { useAllCompanies } from "@/hooks/apiHooks/company/useCompany";
-import { useAllMetals } from "@/hooks/apiHooks/metal/useMetals";
+import { useAllMetals } from "@/modules/metal/hooks/useMetals";
 
 import { DataTable, createDataTableColumns } from "@/component/table/DataTable";
 import { Toaster } from "@/components/ui/toaster";

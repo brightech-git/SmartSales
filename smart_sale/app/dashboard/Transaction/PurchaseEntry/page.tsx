@@ -20,7 +20,7 @@ import TransactionHeaderForm from "./TransactionHeaderForm/TransactionHeaderForm
 import TransactionTypeSelector from "./TransactionTypeSelector/TransactionTypeSelector";
 import DraftTransactionTable from "./DraftTransactionTable/DraftTransactionTable";
 import StockDrawer from "./DrawerTable/StockTable";
-import { useAllMetals } from "@/hooks/apiHooks/metal/useMetals";
+import { useAllMetals } from "@/modules/metal/hooks/useMetals";
 import Loader from "@/component/loader/Loader";
 import BalanceSummary from "./Balance/BalanceSummary";
 import { TransactionListing } from "./TransactionList/TransactionIdsListing";
@@ -40,7 +40,7 @@ import { useStoneItems } from "@/hooks/apiHooks/item/useItems";
 import { useCreateTransactions, useUpdateTransaction, useTransactionByTransId } from "@/hooks/apiHooks/transaction/useTransactions";
 import { usePureGoldData, usePureGoldNames } from "@/hooks/apiHooks/pureGoldMast/usePureGoldMastData";
 import { useActiveOtherCharges } from "@/hooks/apiHooks/otherCharges/useOtherCharges";
-import { useRates } from "@/hooks/apiHooks/rate/useRate";
+import { useRates } from "@/modules/rate/hooks/useRate";
 import { useOrnamentData } from "@/hooks/apiHooks/ornament/useOrnamentData";
 import { useAllBankAccounts } from "@/hooks/apiHooks/bankAccount/useBankAccount";
 import { useBillDetails } from "@/hooks/apiHooks/transaction/useTransactions";

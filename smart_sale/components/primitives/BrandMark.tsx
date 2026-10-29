@@ -9,8 +9,9 @@ type BrandMarkProps = StackProps & {
 };
 
 /**
- * Smart Sales symbol: a faceted gem in gold on garnet. Inline SVG so it is
- * crisp at any size and costs no network request.
+ * Smart Sales symbol: a faceted gem in the secondary colour on the primary
+ * colour, so it follows the selected palette. Inline SVG so it is crisp at
+ * any size and costs no network request.
  */
 export function BrandMark({ showName = true, size = 32, ...rest }: BrandMarkProps) {
     return (
@@ -35,8 +36,8 @@ export function BrandMark({ showName = true, size = 32, ...rest }: BrandMarkProp
                     role="img"
                     aria-label="Smart Sales"
                 >
-                    <path d="M6 3h12l4 6-10 12L2 9l4-6Z" fill="#D4AF37" />
-                    <path d="M2 9h20M9 3 7.5 9 12 21M15 3l1.5 6L12 21" stroke="#80004D" strokeWidth="1.2" strokeLinejoin="round" />
+                    <path d="M6 3h12l4 6-10 12L2 9l4-6Z" style={{ fill: "var(--ss-accent-400)" }} />
+                    <path d="M2 9h20M9 3 7.5 9 12 21M15 3l1.5 6L12 21" style={{ stroke: "var(--ss-brand-700)" }} strokeWidth="1.2" strokeLinejoin="round" />
                 </svg>
             </Box>
             {showName && (

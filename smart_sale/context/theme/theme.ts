@@ -97,6 +97,9 @@ export const designTokens: DesignTokens = {
 };
 // Legacy token bridge: older screens read these via useTheme(). Values are
 // kept in step with the Chakra system in /theme so both look the same.
+// primary / secondary / accient are CSS variables so they follow the palette
+// picked in the Appearance drawer; don't append hex alpha to them, use
+// color-mix() instead.
 export const lightTheme: DesignTokens = {
     ...designTokens,
     fonts: {
@@ -109,13 +112,13 @@ export const lightTheme: DesignTokens = {
     },
     colors: {
         ...designTokens.colors,
-        primary: "#80004D",
-        secondary: "#D4AF37",
+        primary: "var(--ss-brand-600)",
+        secondary: "var(--ss-accent-400)",
         bg: "#F6F6F9",
         inverseText: "#FFFFFF",
         primaryText: "#1A1A21",
         secondaryText: "#555563",
-        accient: "#FBF0F5",
+        accient: "var(--ss-brand-50)",
         formColor: '#FFF',
         whiteColor: '#FFF',
         greyColor: '#EEEEF2',
@@ -130,13 +133,13 @@ export const darkTheme: DesignTokens = {
     ...lightTheme,
     colors: {
         ...lightTheme.colors,
-        primary: "#D4AF37",
-        secondary: "#80004D",
+        primary: "var(--ss-accent-400)",
+        secondary: "var(--ss-brand-600)",
         bg: "#111116",
         inverseText: "#FFFFFF",
         primaryText: "#F6F6F9",
         secondaryText: "#CACAD4",
-        accient: "#3B0024",
+        accient: "var(--ss-brand-900)",
         formColor: '#1A1A21',
         whiteColor: '#FFF',
         greyColor: '#2A2A33',

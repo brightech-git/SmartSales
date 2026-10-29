@@ -120,9 +120,9 @@ type DataTableProps<T extends Record<string, any>> = {
     editingRowColor?: string;
 
     /**
-     * "themed" applies the Smart Sales table style (token colours, uppercase
-     * headers, row hover, brand pagination). "legacy" keeps the old look for
-     * screens not yet migrated.
+     * "themed" (default) applies the Smart Sales table style (token colours,
+     * uppercase headers, row hover, brand pagination) and ignores the colour
+     * props. "legacy" keeps the old look and honours them.
      */
     variant?: "legacy" | "themed";
 };
@@ -149,14 +149,15 @@ export function DataTable<T extends Record<string, any>>({
     overflow = "auto",
     editingRowBg,
     editingRowColor,
-    variant = "legacy",
+    variant = "themed",
 }: DataTableProps<T>) {
     const themed = variant === "themed";
     if (themed) {
-        headerBg ??= "bg.subtle";
-        headerColor ??= "fg.muted";
-        bodyBg ??= "var(--chakra-colors-bg-panel)";
-        if (borderColor === "gray.200") borderColor = "border";
+        // Every table looks the same: page-level colour props only apply to "legacy".
+        headerBg = "bg.subtle";
+        headerColor = "fg.muted";
+        bodyBg = "var(--chakra-colors-bg-panel)";
+        borderColor = "border";
     }
     editingRowBg ??= themed ? "var(--chakra-colors-bg-highlight)" : "#FEF3C7";
 

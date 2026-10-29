@@ -14,6 +14,7 @@ import {
 
 import { formatDateForAPI } from "@/utils/format/formatDateForAPI";
 import { CapitalizedInput } from "@/components/ui/CapitalizedInput";
+import { formatDate } from "@/utils/format/date";
 
 /* ---------------- TYPES ---------------- */
 
@@ -247,7 +248,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
 
     const displayValue = () => {
         if (value == null || value === "") return "-";
-        if (type === "date") return new Date(value).toLocaleDateString("en-GB");
+        if (type === "date") return formatDate(value, { fallback: "-" });
         if (type === "numbers") return new Intl.NumberFormat("en-IN").format(value);
         if (type === "select") return options.find(o => o.value === value)?.label ?? value;
         if (type === "combobox" && collection && getLabelByValue)
