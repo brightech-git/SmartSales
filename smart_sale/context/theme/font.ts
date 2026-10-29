@@ -1,59 +1,18 @@
-import {
-    Alice,
-    Nosifer,
-    Lustria,
-    Rancho,
-    Sofia,
-    Domine
-} from "next/font/google";
-import localFont from 'next/font/local';
+import { Inter, Manrope } from "next/font/google";
 
-export const Caprasimo = localFont({
-    src: "../../public/fonts/Caprasimo/Caprasimo-Regular.ttf",
-    variable: "--font-caprasimo",
-    weight:"400",
-    
-});
-// Primary font
-export const alice = Alice({
+// Body, forms and tables. Inter has tabular numerals for amounts and weights.
+export const inter = Inter({
     subsets: ["latin"],
-    variable: "--font-alice",
-    weight: "400",
+    variable: "--font-inter",
+    display: "swap",
 });
 
-// Heading font
-export const nosifer = Nosifer({
+// Page and section titles only.
+export const manrope = Manrope({
     subsets: ["latin"],
-    variable: "--font-nosifer",
-    weight: "400",
+    variable: "--font-manrope",
+    weight: ["500", "600", "700"],
+    display: "swap",
 });
 
-// Body font
-export const lustria = Lustria({
-    subsets: ["latin"],
-    variable: "--font-lustria",
-    weight: "400",
-});
-
-// Special
-export const rancho = Rancho({
-    subsets: ["latin"],
-    variable: "--font-rancho",
-    weight: "400",
-});
-
-// Secondary
-export const sofia = Sofia({
-    subsets: ["latin"],
-    variable: "--font-sofia",
-    weight: "400",
-});
-export const domine = Domine({
-    subsets: ["latin"],
-    variable: "--font-domine",
-    weight: "400",
-});
-
-// Export ALL in one class string
-export const fontVariables =
-    `${alice.variable} ${nosifer.variable} ${lustria.variable} ${rancho.variable} ${sofia.variable}  ${domine.variable}`;
+export const fontVariables = `${inter.variable} ${manrope.variable}`;

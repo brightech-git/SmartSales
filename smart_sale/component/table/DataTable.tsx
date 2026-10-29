@@ -23,6 +23,7 @@ import {
     type OnChangeFn,
 } from "@tanstack/react-table";
 import { NativeSelectWrapper } from "@/components/ui/NativeSelectWrapper";
+import { EmptyState } from "@/components/primitives";
 
 /** Per-column alignment/width, available on every column's `meta`. */
 type DataTableColumnMeta = {
@@ -117,6 +118,13 @@ type DataTableProps<T extends Record<string, any>> = {
     /** Colors used to highlight the row being edited */
     editingRowBg?: string;
     editingRowColor?: string;
+
+    /**
+     * "themed" applies the Smart Sales table style (token colours, uppercase
+     * headers, row hover, brand pagination). "legacy" keeps the old look for
+     * screens not yet migrated.
+     */
+    variant?: "legacy" | "themed";
 };
 
 const MotionRow = motion.tr;
@@ -139,9 +147,19 @@ export function DataTable<T extends Record<string, any>>({
     maxWidth = "100%",
     maxHeight,
     overflow = "auto",
-    editingRowBg = "#FEF3C7",
+    editingRowBg,
     editingRowColor,
+    variant = "legacy",
 }: DataTableProps<T>) {
+    const themed = variant === "themed";
+    if (themed) {
+        headerBg ??= "bg.subtle";
+        headerColor ??= "fg.muted";
+        bodyBg ??= "var(--chakra-colors-bg-panel)";
+        if (borderColor === "gray.200") borderColor = "border";
+    }
+    editingRowBg ??= themed ? "var(--chakra-colors-bg-highlight)" : "#FEF3C7";
+
     const isSelectionEnabled = selection?.enabled ?? false;
     const isPaginationEnabled = pagination?.enabled ?? false;
 
@@ -269,8 +287,9 @@ export function DataTable<T extends Record<string, any>>({
             w={maxWidth}
             border="1px solid"
             borderColor={borderColor}
-            borderRadius="md"
+            borderRadius={themed ? "l2" : "md"}
             position="relative"
+            overflow={themed ? "hidden" : undefined}
         >
             {title && (
                 <Box px={3} py={2} borderBottom="1px solid" borderColor={borderColor}>
@@ -279,7 +298,7 @@ export function DataTable<T extends Record<string, any>>({
             )}
 
             <Box overflow={overflow} maxH={maxHeight || "400px"} position="relative">
-                <Table.Root size={size} minW="max-content" showColumnBorder>
+                <Table.Root size={size} minW={themed ? "full" : "max-content"} showColumnBorder={!themed}>
                     <Table.Header>
                         {table.getHeaderGroups().map((headerGroup) => (
                             <Table.Row key={headerGroup.id} bg={headerBg} position="sticky" top={0} zIndex={2}>
@@ -295,7 +314,9 @@ export function DataTable<T extends Record<string, any>>({
                                             borderColor={borderColor}
                                             whiteSpace="nowrap"
                                             fontSize="xs"
-                                            py={1}
+                                            py={themed ? 2 : 1}
+                                            textStyle={themed ? "tableHeader" : undefined}
+                                            borderBottomWidth={themed ? "1px" : undefined}
                                             bg={headerBg ?? "white"}
                                             width={header.column.columnDef.meta?.width}
                                             cursor={canSort ? "pointer" : undefined}
@@ -317,11 +338,11 @@ export function DataTable<T extends Record<string, any>>({
                         ))}
                     </Table.Header>
 
-                    <Table.Body>
+                    <Table.Body css={themed ? { "& tr:hover > td": { bg: "bg.hover" } } : undefined}>
                         {rows.length === 0 ? (
                             <Table.Row bg={bodyBg}>
                                 <Table.Cell colSpan={finalColumns.length} textAlign="center" py={2}>
-                                    {emptyText}
+                                    {themed ? <EmptyState title={emptyText} /> : emptyText}
                                 </Table.Cell>
                             </Table.Row>
                         ) : (
@@ -359,7 +380,13 @@ export function DataTable<T extends Record<string, any>>({
                                             {row.getAllCells().map((cell) => {
                                                 const align = cell.column.columnDef.meta?.align ?? "start";
                                                 return (
-                                                    <Table.Cell key={cell.id} textAlign={align} borderColor={borderColor}>
+                                                    <Table.Cell
+                                                        key={cell.id}
+                                                        textAlign={align}
+                                                        borderColor={themed ? "border.muted" : borderColor}
+                                                        textStyle={themed ? "tableCell" : undefined}
+                                                        transition={themed ? "background-color 120ms" : undefined}
+                                                    >
                                                         <table.FlexRender cell={cell} />
                                                     </Table.Cell>
                                                 );
@@ -380,7 +407,7 @@ export function DataTable<T extends Record<string, any>>({
                     p={2}
                     borderTop="1px solid"
                     borderColor={borderColor}
-                    bg={headerBg ?? "white"}
+                    bg={themed ? "bg.panel" : headerBg ?? "white"}
                     fontSize="xs"
                     flexWrap="wrap"
                     gap={2}
@@ -405,7 +432,13 @@ export function DataTable<T extends Record<string, any>>({
                                     fontSize="10px"
                                     placeholder="Show"
                                     disabled={false}
-                                   css={{height:"25px"}}
+                                   css={themed ? {
+                                        height: "26px",
+                                        backgroundColor: "var(--chakra-colors-bg-panel)",
+                                        color: "var(--chakra-colors-fg)",
+                                        border: "1px solid var(--chakra-colors-border-emphasized)",
+                                        borderRadius: "var(--chakra-radii-l2)",
+                                   } : {height:"25px"}}
                                     
 
                                 />
@@ -420,7 +453,7 @@ export function DataTable<T extends Record<string, any>>({
                                     variant="outline"
                                     onClick={() => handlePageChange(currentPage - 1)}
                                     disabled={!table.getCanPreviousPage()}
-                                    color={pagination?.color || "gray.200"}
+                                    color={themed ? undefined : pagination?.color || "gray.200"}
                                     _active={{ transform: "scale(0.94)" }}
                                 >
                                     Previous
@@ -439,7 +472,7 @@ export function DataTable<T extends Record<string, any>>({
                                                 key={pageNum}
                                                 size="2xs"
                                                 variant={currentPage === pageNum ? "solid" : "outline"}
-                                                colorPalette={currentPage === pageNum ?  "blue" : "gray"}
+                                                colorPalette={currentPage === pageNum ? (themed ? "brand" : "blue") : "gray"}
                                                 onClick={() => handlePageChange(pageNum)}
                                                 minW="28px"
                                                 _active={{ transform: "scale(0.94)" }}
@@ -455,7 +488,7 @@ export function DataTable<T extends Record<string, any>>({
                                     variant="outline"
                                     onClick={() => handlePageChange(currentPage + 1)}
                                     disabled={!table.getCanNextPage()}
-                                    color={pagination?.color || "gray.500"}
+                                    color={themed ? undefined : pagination?.color || "gray.500"}
                                     _active={{ transform: "scale(0.94)" }}
                                 >
                                     Next

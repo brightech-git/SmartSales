@@ -6,7 +6,6 @@ import Header from "./header/Header";
 import Sidebar from "./sidebar/SideBar";
 import { useMediaQuery } from "@chakra-ui/react";
 import { usePathname } from "next/navigation";
-import { useTheme } from "@/context/theme/themeContext";
 import { useSidebar } from "@/context/layout/SideBarContext";
 
 const noLayoutRoutes = ["/login"];
@@ -15,8 +14,11 @@ const noLayoutRoutes = ["/login"];
 const normalizePath = (path?: string) =>
     path?.replace(/\/$/, "") || "";
 
+/**
+ * Application shell: full-height sidebar on the left, and a main column with
+ * a sticky header above the page. Below 768px the sidebar becomes a drawer.
+ */
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
-    const { theme } = useTheme();
     const { sidebarConfig, sidebarCollapsed } = useSidebar();
     const [isOpen, setIsOpen] = useState(false);
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
@@ -27,31 +29,26 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
     if (noLayout) return children;
 
-    // Calculate the margin-left based on sidebar state
-    const getMainContentMargin = () => {
-        if (!isDesktop) return "0";
-    
-        return sidebarCollapsed ? sidebarConfig.collapsedWidth : sidebarConfig.expandedWidth;
-    };
+    const mainOffset = !isDesktop
+        ? "0"
+        : sidebarCollapsed ? sidebarConfig.collapsedWidth : sidebarConfig.expandedWidth;
 
     return (
-        <Box>
-            <Header onOpenMenu={() => setIsOpen(true)} />
+        <Box minH="100vh" bg="bg.canvas">
             <Sidebar
                 isOpen={isOpen}
                 onClose={() => setIsOpen(false)}
             />
 
-            
-            {/* Main content area */}
             <Box
-                ml={getMainContentMargin()}
-                transition="margin-left 0.25s ease"
-                p={1}
-                bg={theme.colors.bg}
-         
+                ml={mainOffset}
+                transition="margin-left 0.22s ease"
+                minW={0}
             >
-                {children}
+                <Header onOpenMenu={() => setIsOpen(true)} />
+                <Box as="main" px={{ base: 3, md: 4 }} py={{ base: 3, md: 4 }} minW={0}>
+                    {children}
+                </Box>
             </Box>
         </Box>
     );

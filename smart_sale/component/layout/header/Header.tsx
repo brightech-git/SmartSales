@@ -1,263 +1,145 @@
 "use client";
 
-import { Box, HStack, Button, IconButton, Group, Text, Icon, Menu, Portal, Flex } from "@chakra-ui/react";
-import { FiMenu, FiEye, FiEyeOff, FiSun, FiMoon } from "react-icons/fi";
-import { useMediaQuery } from "@chakra-ui/react";
+import { Box, HStack, Text, Flex, Separator, useMediaQuery } from "@chakra-ui/react";
+import { CalendarDays, Clock, Menu as MenuIcon, Moon, PanelLeftClose, PanelLeftOpen, SquareStack, Sun, AppWindow } from "lucide-react";
 import { useSidebar } from "@/context/layout/SideBarContext";
 import { useTheme } from "@/context/theme/themeContext";
-import { Tooltip } from "@/components/ui/tooltip";
-import {
-    ChevronsLeft,
-    ChevronsRight,
-    Menu as MenuIcon,
-    X,
-} from "lucide-react";
 import { useRates } from "@/hooks/apiHooks/rate/useRate";
 import { MetalRatesMenu } from "../rates/MetalRates";
 import { useEffect, useState } from "react";
-import { usePageName } from "@/context/header/PageNameContext";
 import { usePathname } from "next/navigation";
+import { BrandMark, IconAction } from "@/components/primitives";
 
-const Header = ({ onOpenMenu }: any) => {
+/** "ItemMaster" → "Item Master"; "pureGold" → "Pure Gold". */
+const toTitle = (value: string) => {
+    const spaced = value.replace(/([a-z])([A-Z])/g, "$1 $2").trim();
+    return spaced.replace(/\b\w/g, (c) => c.toUpperCase());
+};
 
-    const { theme, mode, toggleTheme } = useTheme();
+const formatDate = (date: Date) => {
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+};
+
+const Header = ({ onOpenMenu }: { onOpenMenu: () => void }) => {
+    const { mode, toggleTheme } = useTheme();
     const pathname = usePathname();
-    
-    const lastPathName = pathname.split("/").filter(Boolean).pop() ;
-  
-    console.log(lastPathName,'lastPathName')
-
-    
-    const {pageName ,description} =usePageName();
-
-
-    const {
-        sidebarCollapsed,
-        toggleSidebar,
-        multiWindow, 
-        handleMultiWindow
-
-    } = useSidebar();
-
-    console.log(multiWindow,'multiWindow')
+    const { sidebarCollapsed, toggleSidebar, multiWindow, handleMultiWindow } = useSidebar();
     const { data: metalRates, isLoading, isError } = useRates();
-
-
     const [isDesktop] = useMediaQuery(["(min-width: 768px)"]);
-    const now = new Date();
 
-
-    const formatDate = (date: Date) => {
-        const dd = String(date.getDate()).padStart(2, "0");
-        const mm = String(date.getMonth() + 1).padStart(2, "0");
-        const yyyy = date.getFullYear();
-        return `${dd}-${mm}-${yyyy}`;
-    };
-
+    // Page context: "Master" › "Metal Master"
+    const segments = pathname.split("/").filter(Boolean);
+    const section = segments[0] === "dashboard" && segments.length > 2 ? toTitle(segments[1]) : null;
+    const lastSegment = segments[segments.length - 1] ?? "dashboard";
+    // Derived from the URL so it stays correct after back/forward navigation.
+    const pageTitle = toTitle(lastSegment);
 
     const [timeNow, setTimeNow] = useState("");
 
     useEffect(() => {
-
-        const interval = setInterval(() => {
-            const currentTime = new Date().toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-                hour12: true,
-            });
-
-            setTimeNow(currentTime);
-        }, 1000);
-
+        const tick = () =>
+            setTimeNow(
+                new Date().toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                    hour12: true,
+                })
+            );
+        tick();
+        const interval = setInterval(tick, 1000);
         return () => clearInterval(interval);
-
     }, []);
-
-    {
-        if (isError) return <div>Error fetching rates</div>
-    }
-    { if (isLoading) return <div>Error fetching rates</div> }
-
-
-
 
     return (
         <Box
-            bg={theme.colors.accient}
-            borderBottom="2px solid"
-            borderColor={theme.colors.secondary}
-            color={theme.colors.primaryText}
-            boxShadow="0 2px 10px rgba(128,0,77,0.06)"
-            p={2}
+            as="header"
             position="sticky"
-            top="0"
-            zIndex={10}
-            width="100%"
+            top={0}
+            zIndex={100}
+            h="header"
+            bg="header.bg"
+            borderBottomWidth="1px"
+            borderColor="header.border"
+            px={{ base: 2, md: 4 }}
         >
-            <Box
-                display="flex"
-                flexDirection={{ base: "column", sm: "row" }}
-                justifyContent="space-between"
-                alignItems="center"
-                gap={2}
-            >
-                {/* Left section with sidebar controls */}
-                <HStack width={{ base: "100%", sm: "auto" }} justify="space-between">
-                    <HStack>
-                        {/* Mobile menu button */}
-                        {!isDesktop && (
-                            <Tooltip content="Open Menu" showArrow>
-                                <IconButton
-                                    aria-label="Open menu"
-                                    variant="ghost"
-                                    onClick={onOpenMenu}
-                                    color="inherit"
-                                    _hover={{
-                                        bg: "gray.100",
-                                        color: "#222",
-                                    }}
-                                    size="sm"
-                                >
-                                    <MenuIcon size={18} />
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                        {isDesktop && (
-                            <Text
-                                fontSize="md"
-                                fontWeight="700"
-                                color={theme.colors.primary}
-                                letterSpacing="-0.01em"
-                                cursor="pointer"
-                                onClick={onOpenMenu}
-
-                            >
-                                Dashboard
+            <Flex h="full" align="center" justify="space-between" gap={3}>
+                {/* Left: menu control + page context */}
+                <HStack gap={2} minW={0}>
+                    {isDesktop ? (
+                        <IconAction
+                            label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            icon={sidebarCollapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+                            onClick={toggleSidebar}
+                        />
+                    ) : (
+                        <>
+                            <IconAction label="Open menu" icon={<MenuIcon />} onClick={onOpenMenu} />
+                            <BrandMark showName={false} size={28} />
+                        </>
+                    )}
+                    <Separator orientation="vertical" h={5} display={{ base: "none", md: "block" }} />
+                    <Box minW={0}>
+                        {section && (
+                            <Text textStyle="helper" color="fg.subtle" lineHeight="1" mb={0.5} display={{ base: "none", sm: "block" }}>
+                                {section}
                             </Text>
                         )}
-
-                        {/* Desktop sidebar toggle */}
-                        {isDesktop && (
-
-
-                            <Tooltip content={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"} showArrow>
-                                <IconButton
-                                    aria-label={sidebarCollapsed ? "Expand" : "Collapse"}
-                                    variant="ghost"
-                                    onClick={toggleSidebar}
-                                    color="inherit"
-                                    _hover={{
-                                        bg: "gray.100",
-                                        color: "#222",
-                                    }}
-                                    size="sm"
-                                >
-                                    {sidebarCollapsed ? <MenuIcon size={18} /> : <X size={18} />}
-                                </IconButton>
-                            </Tooltip>
-                        )}
-                    </HStack>
-                   
-
-
-                </HStack>
-                <HStack
-                    bg={theme.colors.formColor}
-                    px={4}
-                    py={1}
-                    spaceX={2}
-                    borderRadius="full"
-                    align="center"
-                    border="1px solid"
-                    borderColor={`${theme.colors.secondary}55`}
-                    boxShadow="sm"
-                    maxW="full"
-
-                >
-                    {/* Page Name Badge */}
-                    <Text
-                        fontSize="sm"
-                        fontWeight="bold"
-                        color={theme.colors.primary}
-                        maxW="220px"
-                      truncate
-                    >
-                        {lastPathName}
-                    </Text>
-
-
-                    {/* Description */}
-                    {/* <Text
-                        fontSize="xs"
-                        color="gray.600"
-                        maxW="260px"
-                        truncate
-                    >
-                        {description}
-                    </Text> */}
+                        <Text as="span" display="block" fontFamily="heading" fontWeight="700" fontSize="sm" color="fg" truncate maxW={{ base: "40vw", md: "320px" }}>
+                            {pageTitle}
+                        </Text>
+                    </Box>
                 </HStack>
 
-                {/* Right section with theme toggle */}
-                <HStack
-                    width={{ base: "100%", sm: "auto" }}
-                    justify={{ base: "flex-end", sm: "flex-start" }}
-                >
-                    <HStack>
-                        <MetalRatesMenu rates={metalRates} isLoading={isLoading} isError={isError} latestEntry={metalRates?.["LAST_UPDATED"]} />
-                    </HStack>
-                    {/* Date and Time - visible on all screens */}
+                {/* Right: rates, date/time and view toggles */}
+                <HStack gap={{ base: 1, md: 2 }} flexShrink={0}>
+                    <MetalRatesMenu
+                        rates={metalRates}
+                        isLoading={isLoading}
+                        isError={isError}
+                        latestEntry={metalRates?.["LAST_UPDATED"]}
+                    />
                     <HStack
-                        display="flex"
-                        flexDirection="row"
-                        gap={2}
-                        bg="gray.100"
+                        display={{ base: "none", lg: "flex" }}
+                        gap={3}
                         px={3}
-                        py={1}
-                        borderRadius="full"
+                        h={8}
+                        borderRadius="l2"
+                        bg="bg.subtle"
+                        borderWidth="1px"
+                        borderColor="border.muted"
+                        color="fg.muted"
+                        textStyle="numeric"
+                        fontSize="xs"
+                        aria-label="Current date and time"
                     >
-                        <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                            📅 {formatDate(now)}
-                        </Text>
-                        <Text fontSize="xs" fontWeight="bold" color="gray.700">
-                            🕗 {timeNow}
-                        </Text>
+                        <HStack gap={1.5}>
+                            <CalendarDays size={14} aria-hidden />
+                            <Text>{formatDate(new Date())}</Text>
+                        </HStack>
+                        <HStack gap={1.5} minW="92px">
+                            <Clock size={14} aria-hidden />
+                            <Text suppressHydrationWarning>{timeNow}</Text>
+                        </HStack>
                     </HStack>
-                    <Tooltip content={mode === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"} showArrow>
-                        <IconButton
-                            aria-label="Toggle theme"
-                            variant="ghost"
-                            onClick={toggleTheme}
-                            color="inherit"
-                            _hover={{
-                                bg: "gray.100",
-                                color: "#222",
-                            }}
-                            size="sm"
-                        >
-                            {mode === "light" ? <FiMoon size={16} /> : <FiSun size={16} />}
-                        </IconButton>
-                      
-                    </Tooltip>
-
-                    <Tooltip content={ multiWindow ? "Switch to Normal Window" : "Switch to Multi Window"} showArrow>
-                        <IconButton
-                            aria-label="Toggle theme"
-                            variant="ghost"
-                            onClick={() => handleMultiWindow()}
-                            color="inherit"
-                            _hover={{
-                                bg: "gray.100",
-                                color: "#222",
-                            }}
-                            size="sm"
-                        >
-                            {multiWindow ? <FiMoon size={16} /> : <FiSun size={16} />}
-                        </IconButton>
-
-                    </Tooltip>
+                    <IconAction
+                        label={multiWindow ? "Switch to single window" : "Open pages in new windows"}
+                        icon={multiWindow ? <SquareStack /> : <AppWindow />}
+                        onClick={() => handleMultiWindow()}
+                        aria-pressed={multiWindow}
+                        color={multiWindow ? "fg.brand" : "fg.muted"}
+                        bg={multiWindow ? "brand.subtle" : undefined}
+                    />
+                    <IconAction
+                        label={mode === "light" ? "Switch to dark mode" : "Switch to light mode"}
+                        icon={mode === "light" ? <Moon /> : <Sun />}
+                        onClick={toggleTheme}
+                    />
                 </HStack>
-            </Box>
+            </Flex>
         </Box>
     );
 };

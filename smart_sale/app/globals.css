@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
+/* Colors, fonts and spacing live in /theme (Chakra system). These variables
+   only bridge older class-based styles to the same tokens. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --table-border:#555;
-  --primary-text-size:'10px';
-
+  --background: var(--chakra-colors-bg-canvas, #F6F6F9);
+  --foreground: var(--chakra-colors-fg, #1A1A21);
+  --table-border: #555;
+  --primary-text-size: '10px';
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans);
-  
+  font-family: var(--font-inter), "Segoe UI", system-ui, sans-serif;
 }
 
 

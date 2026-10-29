@@ -34,7 +34,39 @@ interface DynamicFormProps {
     labelFontSize?:string;
     gap?:number,
     errorToShow?:boolean
+    /** "themed" restyles labels and controls with the Smart Sales tokens. */
+    appearance?: "legacy" | "themed"
 }
+
+// Scoped overrides so migrated screens get themed controls without changing
+// the shared input components used by screens that are not migrated yet.
+const themedControlsCss = {
+    "& input:not([type=checkbox]):not([type=radio]), & select": {
+        height: "34px",
+        fontSize: "var(--chakra-font-sizes-ui)",
+        bg: "bg.panel",
+        border: "1px solid",
+        borderColor: "border.emphasized",
+        borderRadius: "l2",
+        color: "fg",
+        px: "2.5",
+        transition: "border-color 120ms, box-shadow 120ms",
+    },
+    "& input:not([type=checkbox]):not([type=radio]):hover, & select:hover": {
+        borderColor: "neutral.400",
+    },
+    "& input:not([type=checkbox]):not([type=radio]):focus, & select:focus": {
+        borderColor: "border.focus",
+        boxShadow: "0 0 0 1px var(--chakra-colors-border-focus)",
+        outline: "none",
+    },
+    "& input:disabled, & select:disabled": {
+        bg: "bg.muted",
+        borderColor: "border",
+        color: "fg.muted",
+        cursor: "not-allowed",
+    },
+};
 
 export const DynamicForm: React.FC<DynamicFormProps> = ({
     fields,
@@ -48,9 +80,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
     minLabelWidth = "100px",
     labelFontSize = "x-small",
     gap= 4,
-    errorToShow = true
-   
+    errorToShow = true,
+    appearance = "legacy",
 }) => {
+    const themed = appearance === "themed";
 
     const [touched, setTouched] = useState<Record<string, boolean>>({});
 
@@ -452,7 +485,7 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
             }
             gridTemplateColumns={layout === "grid" ? getGridTemplateColumns() : undefined}
             gap={gap}
-         
+            css={themed ? themedControlsCss : undefined}
             width="100%"
         >
             {fields.map((field) => (
@@ -484,8 +517,10 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                             ? "100%"  // Full width when stacked
                             : minLabelWidth || "100px"  // Fixed width when beside
                         }
-                        fontSize={labelFontSize}
+                        fontSize={themed ? undefined : labelFontSize}
                         fontWeight="semibold"
+                        textStyle={themed ? "label" : undefined}
+                        color={themed ? "fg.muted" : undefined}
                         whiteSpace={layout === "verticalCombine" || layout === "horizontalCombine"
                             ? "normal"
                             : "nowrap"
@@ -493,7 +528,9 @@ export const DynamicForm: React.FC<DynamicFormProps> = ({
                     >
                         {field.label}
                         {field.required && (
-                            <span style={{ color: 'red', fontSize: '14px' }}>*</span>
+                            themed
+                                ? <Text as="span" color="fg.error" ml={0.5} aria-hidden>*</Text>
+                                : <span style={{ color: 'red', fontSize: '14px' }}>*</span>
                         )}
 
                     </Box>

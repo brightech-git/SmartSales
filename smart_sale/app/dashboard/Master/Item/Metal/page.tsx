@@ -4,24 +4,13 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
     Box,
     Button,
-    VStack,
     Text,
     Grid,
-    GridItem,
     HStack,
-    Stack,
     Fieldset,
-    NativeSelect,
-    createListCollection,
-    For,
-    Flex
+    Kbd,
 } from "@chakra-ui/react";
-import { AiOutlineSave } from "react-icons/ai";
-import { FaEdit } from "react-icons/fa";
-import { IoIosExit } from "react-icons/io";
-
-import { fontVariables } from "@/context/theme/font";
-import { useTheme } from "@/context/theme/themeContext";
+import { Coins, FileSpreadsheet, LogOut, Pencil, Plus, Printer, RefreshCw, RotateCcw, Save } from "lucide-react";
 
 import { useAllMetals, useMetalBySno } from "@/hooks/apiHooks/metal/useMetals";
 import { useUpdateMetal } from "@/hooks/apiHooks/metal/useUpdateMetal";
@@ -34,9 +23,6 @@ import { DataTable, createDataTableColumns, type DataTableColumn } from "@/compo
 import { CapitalizedInput } from "@/components/ui/CapitalizedInput";
 import { usePrint } from "@/context/print/usePrintContext";
 import { useRouter } from "next/navigation";
-import { FaPrint, FaFileExcel } from "react-icons/fa";
-import { FiRefreshCw } from "react-icons/fi";
-import { Tooltip } from "@/components/ui/tooltip";
 import { usePureGoldData } from "@/hooks/apiHooks/pureGoldMast/usePureGoldMastData";
 import { useSoftControlById } from "@/hooks/apiHooks/softControl/useSoftControl";
 
@@ -50,11 +36,22 @@ import { useTransactionLoader } from "@/utils/loader/ResolveLoader";
 import TransactionLoader from "@/component/loader/Transactionloader";
 
 import type { PrintColumn } from "@/component/screens/PrintPreviewScreen";
+import {
+    ActiveBadge,
+    FilterBar,
+    IconAction,
+    PageContainer,
+    PageHeader,
+    SectionCard,
+    StatusBadge,
+} from "@/components/primitives";
+
+/** "METAL NAME" → "Metal name" for form labels. */
+const toSentenceCase = (label: string) => label.charAt(0) + label.slice(1).toLowerCase();
 
 const metalHelper = createDataTableColumns<Metal>();
 
 function MetalMaster() {
-    const { theme } = useTheme();
     const router = useRouter();
     const {isOpen, status, title:loaderTitle, description, openLoader, resolveLoader, closeLoader} = useTransactionLoader();
     const { data: showEditIcon } = useSoftControlById('EDIT_ICON');
@@ -84,7 +81,11 @@ function MetalMaster() {
         { label: "YES", value: "Y" },
         { label: "NO", value: "N" },
     ]
-    const getFormFields = metalMasterFields({ active: activeStatus })
+    const getFormFields = metalMasterFields({ active: activeStatus }).map((f) => ({
+        ...f,
+        label: toSentenceCase(f.label),
+        maxWidth: undefined,
+    }))
     const [metalIdManuallyChanged, setMetalIdManuallyChanged] = useState(false);
 
     const [isEdit, setIsEdit] = useState(false);
@@ -94,6 +95,14 @@ function MetalMaster() {
 
     const { data: metals = [], refetch: refetchMetals, isFetching: metalsFetching } = useAllMetals();
     const [filter, setFilter] = useState<string>('')
+    const [search, setSearch] = useState("");
+    const filteredMetals = useMemo(() => {
+        const q = search.trim().toLowerCase();
+        if (!q) return metals;
+        return metals.filter((m: Metal) =>
+            [m.metalId, m.metalName].some((v) => String(v ?? "").toLowerCase().includes(q))
+        );
+    }, [metals, search]);
     const { data: pureGold } = usePureGoldData(filter);
 
     // Function to move to next field on Enter
@@ -254,7 +263,11 @@ function MetalMaster() {
             metalHelper.accessor("metalId", { header: "Metal Id" }),
             metalHelper.accessor("metalName", { header: "Metal Name" }),
             metalHelper.accessor("displayOrder", { header: "Order", meta: { align: "center" } }),
-            metalHelper.accessor("active", { header: "Active", meta: { align: "center" } }),
+            metalHelper.accessor("active", {
+                header: "Status",
+                meta: { align: "center" },
+                cell: ({ getValue }) => <ActiveBadge value={getValue() as string} />,
+            }),
         ];
 
         if (showEditIcons) {
@@ -265,7 +278,15 @@ function MetalMaster() {
                     meta: { align: "center" },
                     cell: ({ row }) => (
                         <Box display="flex" justifyContent="center">
-                            <FaEdit onClick={() => handleEdit(row.original)} cursor="pointer" />
+                            <IconAction
+                                label={`Edit ${row.original.metalName ?? "metal"}`}
+                                icon={<Pencil />}
+                                size="xs"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEdit(row.original);
+                                }}
+                            />
                         </Box>
                     ),
                 })
@@ -301,13 +322,10 @@ function MetalMaster() {
     useGlobalKey("Alt+e", () => router.back(), "exit");
     useGlobalKey("Alt+u", ()=>handleSave(), "update");
 
+    const isSaving = createMutation.isPending || updateMutation.isPending;
+
     return (
-        <Box
-            className={fontVariables}
-            bg={theme.colors.bg}
-            color={theme.colors.primary}
-            fontWeight='semibold'
-        >
+        <PageContainer size="wide">
             <TransactionLoader
                 isOpen={isOpen}
                 status={status}
@@ -317,128 +335,108 @@ function MetalMaster() {
             />
             <Toaster />
             <ShortcutDialog />
-            <Grid templateColumns={{ base: "1fr", lg: "1fr 2fr" }} gap={2}>
-                {/* LEFT – Form */}
-                <GridItem>
-                    <VStack
-                        w="full"
-                        bg={theme.colors.formColor}
-                        p={2}
-                        borderRadius="xl"
-                        border="1px solid #eef"
-                        boxShadow="0 0 30px rgba(212,212,212,0.2)"
-                    >
-                 
 
-                        <Fieldset.Root size="sm" width="100%">
-                            <Fieldset.Content>
-                                <DynamicForm
-                                    fields={getFormFields}
-                                    formData={form}
-                                    onChange={handleChange}
-                                    register={register}
-                                    focusNext={focusNext}
-                                    minLabelWidth="80px"
-                                    layout="vertical"
-                                />
+            <PageHeader
+                breadcrumbs={[{ label: "Master" }, { label: "Item" }, { label: "Metal Master" }]}
+                title="Metal Master"
+                description="Define the metals you trade and the order they appear in across entry screens and reports."
+                meta={<StatusBadge tone="brand">{metals.length} metals</StatusBadge>}
+                actions={
+                    <Button size="sm" variant="outline" onClick={resetForm}>
+                        <Plus /> New metal
+                    </Button>
+                }
+            />
 
-                                {/* BUTTONS */}
-                                <HStack pt={4} justifyContent="center">
-                                    <Button
-                                        size="xs"
-                                        colorPalette="blue"
-                                        onClick={handleSave}
-                                        ref={saveButtonRef}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter") {
-                                                e.preventDefault();
-                                                handleSave();
-                                            }
-                                        }}
-                                    >
-                                        <AiOutlineSave /> {isEdit ? "Update" : "Save"}
-                                    </Button>
-                                    <Button size="xs" colorPalette="blue" onClick={resetForm}>
-                                        Reset <IoIosExit />
-                                    </Button>
-                                    <Button size="xs" colorPalette="blue" onClick={() => router.back()}>
-                                        Exit <IoIosExit />
-                                    </Button>
-                                </HStack>
-                            </Fieldset.Content>
-                        </Fieldset.Root>
-                    </VStack>
-                </GridItem>
-
-                {/* RIGHT – Table */}
-                <GridItem minW={0}>
-                    <Box
-                        p={2}
-                        borderRadius="xl"
-                        bg={theme.colors.formColor}
-                        border="1px solid #eef"
-                        boxShadow="0 0 30px rgba(212,212,212,0.2)"
-                    >
-                        <Box display='flex' mb={2} gap={2} justifyContent='space-between' alignItems='center'>
-                            <Text fontWeight="semi-bold" fontSize="small">METAL LIST </Text>
-                            <Flex alignItems={"center"} gap={2}>
-                                <Tooltip content="Refresh">
-                                    <Button
-                                        variant="ghost"
-                                        size="xs"
-                                        color={theme.colors.primaryText}
-                                        _hover={{ color: "black" }}
-                                        onClick={() => refetchMetals()}
-                                        aria-label="Refresh"
-                                        loading={metalsFetching}
-                                    >
-                                        <FiRefreshCw />
-                                    </Button>
-                                </Tooltip>
-                                <Button
-                                    variant="ghost"
-                                    size="xs"
-                                    color={theme.colors.green}
-                                    _hover={{ color: "black" }}
-                                    onClick={() => handleExport("excel")}
-                                    aria-label="Export Excel"
-                                >
-                                    <FaFileExcel />
+            <Grid templateColumns={{ base: "1fr", lg: "minmax(300px, 380px) 1fr" }} gap={4} alignItems="start">
+                {/* Form */}
+                <SectionCard
+                    icon={<Coins />}
+                    title={isEdit ? "Edit metal" : "New metal"}
+                    description={isEdit ? `Editing ${form.metalName || "metal"}` : "The ID is filled from the first letter of the name"}
+                    bg={isEdit ? "bg.highlight" : undefined}
+                    footer={
+                        <HStack w="full" justify="space-between" gap={2} flexWrap="wrap">
+                            <HStack gap={1} color="fg.subtle" textStyle="helper" display={{ base: "none", sm: "flex" }}>
+                                <Kbd size="sm">Alt</Kbd>+<Kbd size="sm">S</Kbd>
+                                <Text as="span" mr={2}>save</Text>
+                                <Kbd size="sm">Alt</Kbd>+<Kbd size="sm">R</Kbd>
+                                <Text as="span">reset</Text>
+                            </HStack>
+                            <HStack gap={2} ml="auto">
+                                <Button size="sm" variant="ghost" onClick={() => router.back()}>
+                                    <LogOut /> Exit
                                 </Button>
-
-                                <Button
-                                    variant="ghost"
-                                    size="xs"
-                                    color={theme.colors.primaryText}
-                                    _hover={{ color: "black" }}
-                                    onClick={() => handleExport("pdf")}
-                                    aria-label="Export PDF"
-                                >
-                                    <FaPrint />
+                                <Button size="sm" variant="outline" onClick={resetForm}>
+                                    <RotateCcw /> Reset
                                 </Button>
-                            </Flex>
-                        </Box>
-
-                        <Stack>
-                            <DataTable<Metal>
-                                columns={metalColumns}
-                                data={metals}
-                                size="sm"
-                                headerBg={theme.colors.primary}
-                                bodyBg={theme.colors.bg}
-                                headerColor='white'
-                                borderColor="white"
-                                rowIdKey="sno"
-                                editingRowId={editId ?? (highlightId != null ? String(highlightId) : null)}
-                                emptyText="No parties available"
-                                onRowClick={(metal) => handleEdit(metal)}
-                                pagination={{ enabled: true, pageSize: 10 }}
+                                <Button
+                                    size="sm"
+                                    colorPalette="brand"
+                                    onClick={handleSave}
+                                    ref={saveButtonRef}
+                                    loading={isSaving}
+                                    loadingText={isEdit ? "Updating" : "Saving"}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleSave();
+                                        }
+                                    }}
+                                >
+                                    <Save /> {isEdit ? "Update" : "Save"}
+                                </Button>
+                            </HStack>
+                        </HStack>
+                    }
+                >
+                    <Fieldset.Root size="sm" width="100%">
+                        <Fieldset.Content mt={0}>
+                            <DynamicForm
+                                fields={getFormFields}
+                                formData={form}
+                                onChange={handleChange}
+                                register={register}
+                                focusNext={focusNext}
+                                layout="verticalCombine"
+                                appearance="themed"
+                                gap={3}
                             />
-                        </Stack>
-                    </Box>
-                </GridItem>
+                        </Fieldset.Content>
+                    </Fieldset.Root>
+                </SectionCard>
+
+                {/* List */}
+                <SectionCard
+                    title="Metals"
+                    description="Select a row to edit it"
+                    actions={
+                        <>
+                            <IconAction label="Refresh" icon={<RefreshCw />} onClick={() => refetchMetals()} loading={metalsFetching} />
+                            <IconAction label="Export to Excel" icon={<FileSpreadsheet />} onClick={() => handleExport("excel")} />
+                            <IconAction label="Print / PDF" icon={<Printer />} onClick={() => handleExport("pdf")} />
+                        </>
+                    }
+                >
+                    <FilterBar
+                        search={{ value: search, onChange: setSearch, placeholder: "Search by ID or name" }}
+                        resultText={search ? `${filteredMetals.length} of ${metals.length}` : undefined}
+                    />
+                    <DataTable<Metal>
+                        variant="themed"
+                        columns={metalColumns}
+                        data={filteredMetals}
+                        size="sm"
+                        rowIdKey="sno"
+                        editingRowId={editId ?? (highlightId != null ? String(highlightId) : null)}
+                        emptyText={search ? "No metals match your search" : "No metals yet"}
+                        onRowClick={(metal) => handleEdit(metal)}
+                        pagination={{ enabled: true, pageSize: 10 }}
+                        maxHeight="none"
+                    />
+                </SectionCard>
             </Grid>
-        </Box>
+        </PageContainer>
     );
 }
 

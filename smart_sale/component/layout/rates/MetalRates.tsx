@@ -5,7 +5,6 @@ import { Button, Menu, Portal, HStack, VStack, Text, Flex, Badge, Spinner, Box, 
 import { FaCoins, FaChartLine, FaCaretDown } from "react-icons/fa";
 import { GiSilverBullet } from "react-icons/gi";
 import { GiGoldBar } from "react-icons/gi";
-import { useTheme } from "@/context/theme/themeContext";
 import { Rates } from "@/types/rate/rate";
 
 interface MetalRatesMenuProps {
@@ -49,7 +48,6 @@ const METAL_CONFIG = {
 
 // Professional Metal Rates Menu Component
 export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading, isError ,latestEntry }) => {
-    const { theme, mode } = useTheme();
 
 
     // Format currency with Indian numbering system (₹)
@@ -116,11 +114,9 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
     // Loading state
     if (isLoading) {
         return (
-            <Button variant="outline" size="sm" disabled>
-                <HStack spaceX={2}>
-                    <Spinner size="xs" />
-                    <Text>Loading Rates...</Text>
-                </HStack>
+            <Button variant="outline" size="sm" disabled aria-busy="true">
+                <Spinner size="xs" color="gold.solid" />
+                <Text display={{ base: "none", md: "inline" }}>Loading rates…</Text>
             </Button>
         );
     }
@@ -128,11 +124,9 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
     // Error state
     if (isError || !rates) {
         return (
-            <Button variant="outline" size="sm" colorScheme="red">
-                <HStack spaceX={2}>
-                    <Text>Rates Unavailable</Text>
-                    <FaCaretDown />
-                </HStack>
+            <Button variant="outline" size="sm" colorPalette="danger" disabled>
+                <FaChartLine aria-hidden />
+                <Text display={{ base: "none", md: "inline" }}>Rates unavailable</Text>
             </Button>
         );
     }
@@ -147,54 +141,31 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
             <Menu.Trigger asChild>
                 <Button
                     variant="outline"
-                    size="xs"
-                    bg={theme.colors.formColor}
-                    _hover={{ bg: theme.colors.yellow }}
-                    borderColor="gray.200"
-                    boxShadow="sm"
+                    size="sm"
+                    h={8}
+                    px={2.5}
+                    bg="bg.panel"
+                    borderColor="border"
+                    _hover={{ bg: "bg.highlight", borderColor: "gold.border" }}
+                    aria-label="Today's metal rates"
                 >
-                    <HStack spaceX={2}>
-                        <FaChartLine color={theme.colors.green} size="14px" />
-                        <Box display="flex" flexDirection="column" gap={1}>
-
-                            {/* <Text fontWeight="semibold" color={theme.colors.primaryText} fontSize="sm">
-                                Live Metal Rates
-                            </Text> */}
-
-                            <Box display="flex" gap={4}>
-
-                                <Box display="flex" flexDirection="column">
-                                    <Text fontSize="xs" color={theme.colors.secondaryText}>
-                                        Gold 24K
-                                    </Text>
-                                    <Text fontWeight="medium" color={theme.colors.primaryText}>
-                                        ₹ {rates["GOLD 100.00"]}
-                                    </Text>
-                                </Box>
-
-                                <Box display="flex" flexDirection="column">
-                                    <Text fontSize="xs" color={theme.colors.secondaryText}>
-                                        Gold 22K (916)
-                                    </Text>
-                                    <Text fontWeight="medium" color={theme.colors.primaryText}>
-                                        ₹ {rates["GOLD 916.00"]}
-                                    </Text>
-                                </Box>
-
-                            </Box>
-
-                        </Box>
-                      
-                        <Badge
-                            colorScheme="green"
-                            variant="subtle"
-                            fontSize="10px"
-                            borderRadius="full"
-                            px={2}
-                        >
+                    <HStack gap={3}>
+                        <Box w="6px" h="6px" borderRadius="full" bg="gold.solid" flexShrink={0} />
+                        <HStack gap={3} display={{ base: "none", md: "flex" }}>
+                            <HStack gap={1.5}>
+                                <Text textStyle="helper" color="fg.subtle">24K</Text>
+                                <Text textStyle="numeric" fontSize="xs" color="fg">₹ {rates["GOLD 100.00"]}</Text>
+                            </HStack>
+                            <HStack gap={1.5}>
+                                <Text textStyle="helper" color="fg.subtle">22K</Text>
+                                <Text textStyle="numeric" fontSize="xs" color="fg">₹ {rates["GOLD 916.00"]}</Text>
+                            </HStack>
+                        </HStack>
+                        <Text textStyle="label" color="fg" display={{ base: "inline", md: "none" }}>Rates</Text>
+                        <Badge colorPalette="gold" variant="subtle" size="xs" borderRadius="full">
                             {totalMetals}
                         </Badge>
-                        <FaCaretDown size="14px" color={theme.colors.primaryText} />
+                        <FaCaretDown size="12px" />
                     </HStack>
                 </Button>
             </Menu.Trigger>
@@ -203,16 +174,16 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
                 <Menu.Positioner>
                     <Menu.Content
                         minW="300px"
-                        boxShadow="lg"
-                        borderRadius="md"
+                        boxShadow="overlay"
+                        borderRadius="l3"
                         borderWidth="1px"
-                        borderColor="gray.100"
+                        borderColor="border"
                         p={1}
                     >
                         {/* Header */}
-                        <Box p={2} bg="gray.100" borderBottomWidth="1px" borderColor="gray.400" >
-                            <Text display='flex' fontSize="xs" fontWeight="semibold" color="gray.600" justifyContent='center' alignItems='center'>
-                                TODAY'S RATES
+                        <Box px={3} py={2} borderBottomWidth="1px" borderColor="border.muted">
+                            <Text textStyle="overline" color="fg.muted">
+                                Today&apos;s rates
                             </Text>
                         </Box>
 
@@ -237,20 +208,20 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
                                                         {details.icon}
                                                     </Box>
                                                     <VStack spaceY={0} align="start">
-                                                        <Text fontSize="xs" fontWeight="medium" color="gray.800">
+                                                        <Text fontSize="xs" fontWeight="medium" color="fg">
                                                             {details.label}
                                                         </Text>
                                                     </VStack>
                                                 </HStack>
                                                 <VStack spaceY={0} align="end">
-                                                    <Text fontSize="xs" fontWeight="semibold" color="green.500">
+                                                    <Text textStyle="numeric" fontSize="xs" color="fg">
                                                         {formatCurrency(numericValue)}
                                                     </Text>
                                                 </VStack>
                                             </Flex>
                                         </Menu.Item>
                                         {index < sortedEntries.length - 1 && (
-                                            <Separator borderColor="gray.100" />
+                                            <Separator borderColor="border.muted" />
                                         )}
                                     </React.Fragment>
                                 );
@@ -258,8 +229,8 @@ export const MetalRatesMenu: React.FC<MetalRatesMenuProps> = ({ rates, isLoading
                         </VStack>
 
                         {/* Footer with timestamp */}
-                        <Box py={2} bg="gray.50" borderTopWidth="1px" borderColor="gray.100" borderRadius="0 0 md md">
-                            <Text fontSize="10px" color="gray.600" textAlign="center">
+                        <Box py={2} bg="bg.subtle" borderTopWidth="1px" borderColor="border.muted" borderBottomRadius="l2">
+                            <Text textStyle="helper" color="fg.subtle" textAlign="center">
                                 Last updated: {latestEntry}
                             </Text>
                         </Box>
